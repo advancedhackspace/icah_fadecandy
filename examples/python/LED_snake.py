@@ -17,8 +17,21 @@ yLEDs = 32
 client = opc.Client('localhost:7890')
 evbuf = ""
 
+black = [ (0,0,0) ] * numLEDs
+white = [ (255,255,255) ] * numLEDs
+red = [ (255,0,0) ] * numLEDs
+
+blackMatrix = [[(0,0,0)] * yLEDs for i in range(xLEDs)]
+whiteMatrix = [[(255,255,255)] * yLEDs for i in range(xLEDs)]
+redMatrix = [[(255,0,0)] * yLEDs for i in range(xLEDs)]
+
 pixels = [ (0,0,0) ] * numLEDs
 pixelMatrix = [[(0,0,0)] * yLEDs for i in range(xLEDs)]
+
+start_mode = True
+food = None
+snake = []
+
 
 def calcPixelArrayPos( _x, _y):
 	pos = (_x*numLEDsPerStrip) + ((_x%2)*numLEDsPerStrip) + (((_x+1)%2)*_y) + ((_x%2)*-_y) + ((_x%2)*-1)
@@ -28,12 +41,17 @@ def calcPixelArrayPos( _x, _y):
 def matrixToArray(coords):
 	for x in range(34):
 		for y in range(32):
-			pixels[calcPixelArrayPos(x,y)] = pixelMatrix[x][y]
+			pixels[calcPixelArrayPos(x,y)] = coords[x][y]
 
 
 def updatePixelMatrixWithList(s):
 	for i in range(len(s)):
 		pixelMatrix[s[i][0]][s[i][1]] = s[i][2]
+
+def resetPixelMatrix():
+	for x in range(34):
+		for y in range(32):
+			pixelMatrix[x][y] = (0,0,0)
 
 def generateFoodPos():
 	f=None
@@ -41,10 +59,40 @@ def generateFoodPos():
 		newfood = [[
 				random.randint(1,xLEDs-2),
 				random.randint(1,yLEDs-2),
-				(255,0,0)
+				(0,255,0)
 				]]
 		f = newfood if newfood not in snake else None
 		return f
+
+def letterToLED(_letter, _x, _y):
+	letterMatrix = [[(0,0,0)] * 5 for i in range(5)]
+	letterMatrix = alphabet[_letter]
+
+def gameOver():
+	pixelMatrix = redMatrix
+	matrixToArray(pixelMatrix)
+	client.put_pixels(pixels)
+	time.sleep(0.1) 
+	pixelMatrix = blackMatrix
+	matrixToArray(pixelMatrix)
+	client.put_pixels(pixels)
+	time.sleep(0.1)
+	pixelMatrix = redMatrix
+	matrixToArray(pixelMatrix)
+	client.put_pixels(pixels)
+	time.sleep(0.1) 
+	pixelMatrix = blackMatrix
+	matrixToArray(pixelMatrix)
+	client.put_pixels(pixels)
+	time.sleep(0.1)
+	pixelMatrix = redMatrix
+	matrixToArray(pixelMatrix)
+	client.put_pixels(pixels)
+	time.sleep(0.1) 
+	pixelMatrix = blackMatrix
+	matrixToArray(pixelMatrix)
+	client.put_pixels(pixels)
+	time.sleep(0.1)
 
 def dancematThread():
 	global evbuf
@@ -53,16 +101,18 @@ def dancematThread():
 		with lock:
 			evbuf = jsdev.read(8)
 
-if __name__ == '__main__':
-	alphabet = {
-		"a" : [
-		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
-		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
-		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
-		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)]
-		]
+# alphabet = {
+# 	"A" : [
+# 		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
+# 		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
+# 		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
+# 		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
 
-	}
+# 	]
+# }
+
+if __name__ == '__main__':
+
 
 	# Iterate over the joystick devices.
 	print('Available devices:')
@@ -151,7 +201,7 @@ if __name__ == '__main__':
 	button_map = []
 
 	# Open the joystick device.
-	fn = '/dev/input/js0'
+	fn = '/dev/input/js2'
 	print('Opening %s...' % fn)
 	jsdev = open(fn, 'rb')
 
@@ -201,72 +251,108 @@ if __name__ == '__main__':
 	startx = xLEDs/4
 	starty = yLEDs/2
 
-	snake = [
-		[startx, 	starty, (255,255,255)],
-		[startx-1, 	starty, (255,255,255)],
-		[startx-2, 	starty, (255,255,255)]
-	]
+	# snake = [
+	# 	[startx, 	starty, (255,255,255)],
+	# 	[startx-1, 	starty, (255,255,255)],
+	# 	[startx-2, 	starty, (255,255,255)]
+	# ]
 
-	food = generateFoodPos()
-	key = curses.KEY_RIGHT
+	
 
 	thread = threading.Thread(target = dancematThread)
 	thread.daemon = True
 	thread.start()
-	time.sleep(5)
+	# time.sleep(5)
 
-	while True:
-		next_key = w.getch()
-		key = key if next_key == -1 else next_key
-		if evbuf:
-			time2, value, type, number = struct.unpack('IhBB', evbuf)
-			if type & 0x01:
-				button = button_map[number]
-				if button:
-					button_states[button] = value
-					if value:
-						print "%s pressed" % (button)
-						if (button == "thumb2"):
-							key = curses.KEY_UP
-						if (button == "thumb"):
-							key = curses.KEY_DOWN
-						if (button == "trigger"):
-							key = curses.KEY_LEFT
-						if (button == "top"):
-							key = curses.KEY_RIGHT
-					else:
-						print "%s released" % (button)
+	client.put_pixels(pixels)
 
-		
+	try:
+		while True:
+			
+			while (start_mode):
+				# print "in start mode"
+				pixels = black[:]
+				client.put_pixels(pixels)
+				if evbuf:
+					time2, value, type, number = struct.unpack('IhBB', evbuf)
+					if type & 0x01:
+						button = button_map[number]
+						if button:
+							button_states[button] = value
+							if value:
+								# print "%s pressed" % (button)
+								if (button == "base4"):
+									snake = [
+										[startx, 	starty, (255,255,255)],
+										[startx-1, 	starty, (255,255,255)],
+										[startx-2, 	starty, (255,255,255)]
+									]
+									start_mode = False
+									food = generateFoodPos()
+									key = curses.KEY_RIGHT
+									pixels = black[:]
+									resetPixelMatrix()
+									client.put_pixels(pixels)
+									time.sleep(2)
 
-		if snake[0][0] in [0, xLEDs-1] or snake[0][1] in [0, yLEDs-1] or snake[0] in snake[1:]: #need to add bit to do with colliding with itself
-			print snake[0]
-			print snake[1:]
-			curses.endwin()
-			quit()
 
-		new_head = [snake[0][0], snake[0][1], (255,255,255)]
+			#next_key = w.getch()
+			#key = key if next_key == -1 else next_key
+			if evbuf:
+				time2, value, type, number = struct.unpack('IhBB', evbuf)
+				if type & 0x01:
+					button = button_map[number]
+					if button:
+						button_states[button] = value
+						if value:
+							# print "%s pressed" % (button)
+							if (button == "thumb2"):
+								key = curses.KEY_UP
+							if (button == "thumb"):
+								key = curses.KEY_DOWN
+							if (button == "trigger"):
+								key = curses.KEY_LEFT
+							if (button == "top"):
+								key = curses.KEY_RIGHT
+						# else:
+							# print "%s released" % (button)
 
-		if key == curses.KEY_DOWN:
-			new_head[1] -= 1
-		if key == curses.KEY_UP:
-			new_head[1] += 1
-		if key == curses.KEY_LEFT:
-			new_head[0] -= 1
-		if key == curses.KEY_RIGHT:
-			new_head[0] += 1
+			
 
-		snake.insert(0, new_head)
+			if snake[0][0] in [0, xLEDs-1] or snake[0][1] in [0, yLEDs-1] or snake[0] in snake[1:]: #need to add bit to do with colliding with itself
+				print snake[0]
+				print snake[1:]
+				gameOver()
+				start_mode = True
+				continue
+				# start_mode = True
+				# curses.endwin()
+				# quit()
 
-		if (snake[0][0] == food[0][0]) and (snake[0][1] == food [0][1]):
-			# pixelMatrix[food[0][0]][food[0][1]] = (255,255,255)
-			food = generateFoodPos()
-		else:
-			tail = snake.pop()
-			pixelMatrix[tail[0]][tail[1]] = (0,0,0)
+			new_head = [snake[0][0], snake[0][1], (255,255,255)]
 
-		updatePixelMatrixWithList(snake)
-		updatePixelMatrixWithList(food)
-		matrixToArray(pixelMatrix)
-		client.put_pixels(pixels)
-		time.sleep(0.1)
+			if key == curses.KEY_DOWN:
+				new_head[1] -= 1
+			if key == curses.KEY_UP:
+				new_head[1] += 1
+			if key == curses.KEY_LEFT:
+				new_head[0] -= 1
+			if key == curses.KEY_RIGHT:
+				new_head[0] += 1
+
+			snake.insert(0, new_head)
+
+			if (snake[0][0] == food[0][0]) and (snake[0][1] == food [0][1]):
+				food = generateFoodPos()
+			else:
+				tail = snake.pop()
+				pixelMatrix[tail[0]][tail[1]] = (0,0,0)
+
+			updatePixelMatrixWithList(snake)
+			updatePixelMatrixWithList(food)
+			matrixToArray(pixelMatrix)
+			client.put_pixels(pixels)
+			time.sleep(0.1)
+	except KeyboardInterrupt:
+		curses.endwin()
+		quit()
