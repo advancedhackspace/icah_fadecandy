@@ -14,13 +14,15 @@
             "map": [
                 [ 0, 0, 0, 512 ]
             ]
-        }
+        },
+	{
         
             "type": "fadecandy",
             "map": [
                 [ 0, 512, 0, 512 ]
             ]
-        }
+        },
+	{
         
             "type": "fadecandy",
             "map": [
