@@ -47,7 +47,6 @@ def generateFoodPos():
 		return f
 
 def dancematThread():
-
 	global evbuf
 	lock = threading.Lock()
 	while True:
@@ -55,6 +54,15 @@ def dancematThread():
 			evbuf = jsdev.read(8)
 
 if __name__ == '__main__':
+	alphabet = {
+		"a" : [
+		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
+		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
+		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
+		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)]
+		]
+
+	}
 
 	# Iterate over the joystick devices.
 	print('Available devices:')
