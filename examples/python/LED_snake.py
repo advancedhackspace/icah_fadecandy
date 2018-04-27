@@ -49,7 +49,7 @@ if __name__ == '__main__':
 	sh, sw = s.getmaxyx()
 	w = curses.newwin(sh, sw, 0, 0)
 	w.keypad(1)
-	w.timeout(100)
+	w.timeout(10)
 	startx = xLEDs/4
 	starty = yLEDs/2
 
@@ -96,4 +96,5 @@ if __name__ == '__main__':
 		updatePixelMatrixWithList(food)
 		matrixToArray(pixelMatrix)
 		client.put_pixels(pixels)
-		time.sleep(0.01)
+		print len(snake)
+		time.sleep(1.0/(len(snake)+1))
