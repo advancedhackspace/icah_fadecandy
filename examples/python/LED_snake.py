@@ -352,7 +352,7 @@ if __name__ == '__main__':
 			updatePixelMatrixWithList(food)
 			matrixToArray(pixelMatrix)
 			client.put_pixels(pixels)
-			time.sleep(0.1)
+			time.sleep(1.0/(len(snake)+1))
 	except KeyboardInterrupt:
 		curses.endwin()
 		quit()
