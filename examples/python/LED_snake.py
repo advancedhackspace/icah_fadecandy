@@ -201,7 +201,7 @@ if __name__ == '__main__':
 	button_map = []
 
 	# Open the joystick device.
-	fn = '/dev/input/js2'
+	fn = '/dev/input/js0'
 	print('Opening %s...' % fn)
 	jsdev = open(fn, 'rb')
 
