@@ -290,6 +290,7 @@ if __name__ == '__main__':
 									start_mode = False
 									food = generateFoodPos()
 									key = curses.KEY_RIGHT
+									prev_key = curses.KEY_RIGHT
 									pixels = black[:]
 									resetPixelMatrix()
 									client.put_pixels(pixels)
@@ -306,14 +307,22 @@ if __name__ == '__main__':
 						button_states[button] = value
 						if value:
 							# print "%s pressed" % (button)
-							if (button == "thumb2"):
-								key = curses.KEY_UP
-							if (button == "thumb"):
-								key = curses.KEY_DOWN
-							if (button == "trigger"):
-								key = curses.KEY_LEFT
-							if (button == "top"):
-								key = curses.KEY_RIGHT
+							if (button == "thumb2"): #UP
+								if (prev_key != curses.KEY_DOWN):
+									key = curses.KEY_UP
+									prev_key = key
+							if (button == "thumb"): #DOWN
+								if (prev_key != curses.KEY_UP):
+									key = curses.KEY_DOWN
+									prev_key = key
+							if (button == "trigger"): #LEFT
+								if (prev_key != curses.KEY_RIGHT):
+									key = curses.KEY_LEFT
+									prev_key = key
+							if (button == "top"): #RIGHT
+								if (prev_key != curses.KEY_LEFT):
+									key = curses.KEY_RIGHT
+									prev_key = key
 						# else:
 							# print "%s released" % (button)
 
