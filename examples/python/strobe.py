@@ -4,7 +4,7 @@
 
 import opc, time
 
-numLEDs = 512
+numLEDs = 1079
 client = opc.Client('localhost:7890')
 
 black = [ (0,0,0) ] * numLEDs
