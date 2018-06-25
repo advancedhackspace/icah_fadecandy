@@ -289,7 +289,7 @@ def gameStartPixels(b):
 	pixelMatrix[	24+5	][	4+13	] = (	b	,	b	,	b	)
 
 def calcPixelArrayPos( _x, _y):
-	pos = (_x*numLEDsPerStrip) + ((_x%2)*numLEDsPerStrip) + (((_x+1)%2)*_y) + ((_x%2)*-_y) + ((_x%2)*-1)
+	pos = 55+(_x*numLEDsPerStrip) + ((_x%2)*numLEDsPerStrip) + (((_x+1)%2)*_y) + ((_x%2)*-_y) + ((_x%2)*-1)
 	return pos
 
 
