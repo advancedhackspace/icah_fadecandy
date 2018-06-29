@@ -10,6 +10,8 @@ import threading, time
 import os, struct, array
 from fcntl import ioctl
 
+import sys
+
 numLEDs = 1088+55
 numLEDsPerStrip = 32
 xLEDs = 34
@@ -107,7 +109,7 @@ def gameStartPixels(b):
 	pixelMatrix[	14+5	][	1+21	] = (	0	,	0	,	0	)
 	pixelMatrix[	14+5	][	2+21	] = (	0	,	0	,	0	)
 	pixelMatrix[	14+5	][	3+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	14+5	][	4+21	] = (	0	,	0	,	0	)			
+	pixelMatrix[	14+5	][	4+21	] = (	0	,	0	,	0	)
 	pixelMatrix[	15+5	][	0+21	] = (	b	,	b	,	b	)#s
 	pixelMatrix[	15+5	][	1+21	] = (	0	,	0	,	0	)
 	pixelMatrix[	15+5	][	2+21	] = (	0	,	0	,	0	)
@@ -227,7 +229,7 @@ def gameStartPixels(b):
 	pixelMatrix[	12+5	][	2+13	] = (	b	,	b	,	b	)
 	pixelMatrix[	12+5	][	3+13	] = (	0	,	0	,	0	)
 	pixelMatrix[	12+5	][	4+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	13+5	][	0+13	] = (	b	,	b	,	b	) 
+	pixelMatrix[	13+5	][	0+13	] = (	b	,	b	,	b	)
 	pixelMatrix[	13+5	][	1+13	] = (	b	,	b	,	b	)
 	pixelMatrix[	13+5	][	2+13	] = (	b	,	b	,	b	)
 	pixelMatrix[	13+5	][	3+13	] = (	b	,	b	,	b	)
@@ -312,10 +314,10 @@ def generateFoodPos():
 	f=None
 	while f is None:
 		newfood = [[
-				random.randint(1,xLEDs-2),
-				random.randint(1,yLEDs-2),
-				(0,255,0)
-				]]
+		random.randint(1,xLEDs-2),
+		random.randint(1,yLEDs-2),
+		(0,255,0)
+		]]
 		f = newfood if newfood not in snake else None
 		return f
 
@@ -328,7 +330,7 @@ def gameOver():
 	matrixToArray(pixelMatrix)
 	pixels = [(255,0,0)] * numLEDs
 	client.put_pixels(pixels)
-	time.sleep(0.1) 
+	time.sleep(0.1)
 	pixelMatrix = blackMatrix
 	matrixToArray(pixelMatrix)
 	pixels = [(0,0,0)] * numLEDs
@@ -338,7 +340,7 @@ def gameOver():
 	matrixToArray(pixelMatrix)
 	pixels = [(255,0,0)] * numLEDs
 	client.put_pixels(pixels)
-	time.sleep(0.1) 
+	time.sleep(0.1)
 	pixelMatrix = blackMatrix
 	matrixToArray(pixelMatrix)
 	pixels = [(0,0,0)] * numLEDs
@@ -348,7 +350,7 @@ def gameOver():
 	matrixToArray(pixelMatrix)
 	pixels = [(255,0,0)] * numLEDs
 	client.put_pixels(pixels)
-	time.sleep(0.1) 
+	time.sleep(0.1)
 	pixelMatrix = blackMatrix
 	matrixToArray(pixelMatrix)
 	pixels = [(0,0,0)] * numLEDs
@@ -362,24 +364,33 @@ def dancematThread():
 		with lock:
 			evbuf = jsdev.read(8)
 
-# alphabet = {
-# 	"A" : [
-# 		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
-# 		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
-# 		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
-# 		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
-
-# 	]
-# }
+			# alphabet = {
+			# 	"A" : [
+			# 		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
+			# 		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
+			# 		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
+			# 		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
+			# 	]
+			# }
 
 if __name__ == '__main__':
+
+	# Set mode based on command line args
+	# 0 = game mode
+	# 1 = dev mode (don't use joysticks, send data to opengl server)
+	assert (len(sys.argv) != 1), 'Incorrect number of arguments supplied'
+
+	if (sys.argv[1] == "0"):
+		print '0'
+	else:
+		print '1'
 
 	# Iterate over the joystick devices.
 	print('Available devices:')
 
 	for fn in os.listdir('/dev/input'):
-	    if fn.startswith('js'):
-	        print('  /dev/input/%s' % (fn))
+		if fn.startswith('js'):
+			print('  /dev/input/%s' % (fn))
 
 	# We'll store the states here.
 	axis_states = {}
@@ -387,74 +398,74 @@ if __name__ == '__main__':
 
 	# These constants were borrowed from linux/input.h
 	axis_names = {
-	    0x00 : 'x',
-	    0x01 : 'y',
-	    0x02 : 'z',
-	    0x03 : 'rx',
-	    0x04 : 'ry',
-	    0x05 : 'rz',
-	    0x06 : 'trottle',
-	    0x07 : 'rudder',
-	    0x08 : 'wheel',
-	    0x09 : 'gas',
-	    0x0a : 'brake',
-	    0x10 : 'hat0x',
-	    0x11 : 'hat0y',
-	    0x12 : 'hat1x',
-	    0x13 : 'hat1y',
-	    0x14 : 'hat2x',
-	    0x15 : 'hat2y',
-	    0x16 : 'hat3x',
-	    0x17 : 'hat3y',
-	    0x18 : 'pressure',
-	    0x19 : 'distance',
-	    0x1a : 'tilt_x',
-	    0x1b : 'tilt_y',
-	    0x1c : 'tool_width',
-	    0x20 : 'volume',
-	    0x28 : 'misc',
+	0x00 : 'x',
+	0x01 : 'y',
+	0x02 : 'z',
+	0x03 : 'rx',
+	0x04 : 'ry',
+	0x05 : 'rz',
+	0x06 : 'trottle',
+	0x07 : 'rudder',
+	0x08 : 'wheel',
+	0x09 : 'gas',
+	0x0a : 'brake',
+	0x10 : 'hat0x',
+	0x11 : 'hat0y',
+	0x12 : 'hat1x',
+	0x13 : 'hat1y',
+	0x14 : 'hat2x',
+	0x15 : 'hat2y',
+	0x16 : 'hat3x',
+	0x17 : 'hat3y',
+	0x18 : 'pressure',
+	0x19 : 'distance',
+	0x1a : 'tilt_x',
+	0x1b : 'tilt_y',
+	0x1c : 'tool_width',
+	0x20 : 'volume',
+	0x28 : 'misc',
 	}
 
 	button_names = {
-	    0x120 : 'trigger',
-	    0x121 : 'thumb',
-	    0x122 : 'thumb2',
-	    0x123 : 'top',
-	    0x124 : 'top2',
-	    0x125 : 'pinkie',
-	    0x126 : 'base',
-	    0x127 : 'base2',
-	    0x128 : 'base3',
-	    0x129 : 'base4',
-	    0x12a : 'base5',
-	    0x12b : 'base6',
-	    0x12f : 'dead',
-	    0x130 : 'a',
-	    0x131 : 'b',
-	    0x132 : 'c',
-	    0x133 : 'x',
-	    0x134 : 'y',
-	    0x135 : 'z',
-	    0x136 : 'tl',
-	    0x137 : 'tr',
-	    0x138 : 'tl2',
-	    0x139 : 'tr2',
-	    0x13a : 'select',
-	    0x13b : 'start',
-	    0x13c : 'mode',
-	    0x13d : 'thumbl',
-	    0x13e : 'thumbr',
+	0x120 : 'trigger',
+	0x121 : 'thumb',
+	0x122 : 'thumb2',
+	0x123 : 'top',
+	0x124 : 'top2',
+	0x125 : 'pinkie',
+	0x126 : 'base',
+	0x127 : 'base2',
+	0x128 : 'base3',
+	0x129 : 'base4',
+	0x12a : 'base5',
+	0x12b : 'base6',
+	0x12f : 'dead',
+	0x130 : 'a',
+	0x131 : 'b',
+	0x132 : 'c',
+	0x133 : 'x',
+	0x134 : 'y',
+	0x135 : 'z',
+	0x136 : 'tl',
+	0x137 : 'tr',
+	0x138 : 'tl2',
+	0x139 : 'tr2',
+	0x13a : 'select',
+	0x13b : 'start',
+	0x13c : 'mode',
+	0x13d : 'thumbl',
+	0x13e : 'thumbr',
 
-	    0x220 : 'dpad_up',
-	    0x221 : 'dpad_down',
-	    0x222 : 'dpad_left',
-	    0x223 : 'dpad_right',
+	0x220 : 'dpad_up',
+	0x221 : 'dpad_down',
+	0x222 : 'dpad_left',
+	0x223 : 'dpad_right',
 
-	    # XBox 360 controller uses these codes.
-	    0x2c0 : 'dpad_left',
-	    0x2c1 : 'dpad_right',
-	    0x2c2 : 'dpad_up',
-	    0x2c3 : 'dpad_down',
+	# XBox 360 controller uses these codes.
+	0x2c0 : 'dpad_left',
+	0x2c1 : 'dpad_right',
+	0x2c2 : 'dpad_up',
+	0x2c3 : 'dpad_down',
 	}
 
 	axis_map = []
@@ -486,18 +497,18 @@ if __name__ == '__main__':
 	ioctl(jsdev, 0x80406a32, buf) # JSIOCGAXMAP
 
 	for axis in buf[:num_axes]:
-	    axis_name = axis_names.get(axis, 'unknown(0x%02x)' % axis)
-	    axis_map.append(axis_name)
-	    axis_states[axis_name] = 0.0
+		axis_name = axis_names.get(axis, 'unknown(0x%02x)' % axis)
+		axis_map.append(axis_name)
+		axis_states[axis_name] = 0.0
 
 	# Get the button map.
 	buf = array.array('H', [0] * 200)
 	ioctl(jsdev, 0x80406a34, buf) # JSIOCGBTNMAP
 
 	for btn in buf[:num_buttons]:
-	    btn_name = button_names.get(btn, 'unknown(0x%03x)' % btn)
-	    button_map.append(btn_name)
-	    button_states[btn_name] = 0
+		btn_name = button_names.get(btn, 'unknown(0x%03x)' % btn)
+		button_map.append(btn_name)
+		button_states[btn_name] = 0
 
 	print '%d axes found: %s' % (num_axes, ', '.join(axis_map))
 	print '%d buttons found: %s' % (num_buttons, ', '.join(button_map))
@@ -516,8 +527,6 @@ if __name__ == '__main__':
 	# 	[startx-1, 	starty, (255,255,255)],
 	# 	[startx-2, 	starty, (255,255,255)]
 	# ]
-
-	
 
 	thread = threading.Thread(target = dancematThread)
 	thread.daemon = True
@@ -565,7 +574,6 @@ if __name__ == '__main__':
 									client.put_pixels(pixels)
 									time.sleep(2)
 
-
 			#next_key = w.getch()
 			#key = key if next_key == -1 else next_key
 			if evbuf:
@@ -594,8 +602,6 @@ if __name__ == '__main__':
 									prev_key = key
 						# else:
 							# print "%s released" % (button)
-
-			
 
 			if snake[0][0] in [0, xLEDs-1] or snake[0][1] in [0, yLEDs-1] or snake[0] in snake[1:]: #need to add bit to do with colliding with itself
 				print snake[0]
