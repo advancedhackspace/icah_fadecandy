@@ -351,17 +351,7 @@ def dancematThread():
 			# 	]
 			# }
 
-if __name__ == '__main__':
-	# Set mode based on command line args
-	# 0 = game mode
-	# 1 = dev mode (don't use joysticks, send data to opengl server)
-	assert (len(sys.argv) == 2), 'Incorrect number of arguments supplied'
-
-	if (sys.argv[1] == "0"):
-		print '0'
-	else:
-		print '1'
-
+def joystick_run():
 	# Iterate over the joystick devices.
 	print('Available devices:')
 
@@ -554,3 +544,161 @@ if __name__ == '__main__':
 	except KeyboardInterrupt:
 		curses.endwin()
 		quit()
+
+def develop_run():
+	# Setup keybord input
+	#TODO: Lookup what this does
+	#curses.initsrc()
+	curses.initscr()
+	win = curses.newwin(20, 60, 0, 0)
+	win.keypad(1)
+	curses.noecho()
+	curses.curs_set(0)
+	win.border(0)
+	win.nodelay(1)
+
+
+	# We'll store the states here.
+	axis_states = {}
+	button_states = {}
+
+	axis_map = []
+	button_map = []
+
+	client.put_pixels(pixels)
+
+	try:
+		while True:
+			brightness = 0
+			shift = 1
+			while (start_mode):
+				# print "in start mode"
+				# pixels = black[:]
+				# client.put_pixels(pixels)
+				brightness = brightness+(5*shift)
+				if (brightness  == 255):
+					shift = -1
+				if (brightness == 100):
+					shift = 1
+				gameStartPixels(brightness)
+				matrixToArray(pixelMatrix)
+				client.put_pixels(pixels)
+				if evbuf:
+					time2, value, type, number = struct.unpack('IhBB', evbuf)
+					if type & 0x01:
+						button = button_map[number]
+						if button:
+							button_states[button] = value
+							if value:
+
+								# *********************** START GAME
+
+								# if start button pressed
+								if (button == "base4"):
+									snake = [
+										[startx, 	starty, (255,255,255)],
+										[startx-1, 	starty, (255,255,255)],
+										[startx-2, 	starty, (255,255,255)]
+									]
+									start_mode = False
+									food = generateFoodPos()
+									key = curses.KEY_RIGHT
+									prev_key = curses.KEY_RIGHT
+									pixels = black[:]
+									resetPixelMatrix()
+									client.put_pixels(pixels)
+									time.sleep(2)
+
+			# *************************
+			# If button pressed in game
+
+			#next_key = w.getch()
+			#key = key if next_key == -1 else next_key
+			if evbuf:
+				time2, value, type, number = struct.unpack('IhBB', evbuf)
+				if type & 0x01:
+					button = button_map[number]
+					if button:
+						button_states[button] = value
+						if value:
+							# print "%s pressed" % (button)
+							if (button == "thumb2"): #UP
+								if (prev_key != curses.KEY_DOWN):
+									key = curses.KEY_UP
+									prev_key = key
+							if (button == "thumb"): #DOWN
+								if (prev_key != curses.KEY_UP):
+									key = curses.KEY_DOWN
+									prev_key = key
+							if (button == "trigger"): #LEFT
+								if (prev_key != curses.KEY_RIGHT):
+									key = curses.KEY_LEFT
+									prev_key = key
+							if (button == "top"): #RIGHT
+								if (prev_key != curses.KEY_LEFT):
+									key = curses.KEY_RIGHT
+									prev_key = key
+						# else:
+							# print "%s released" % (button)
+
+			if snake[0][0] in [0, xLEDs-1] or snake[0][1] in [0, yLEDs-1] or snake[0] in snake[1:]: #need to add bit to do with colliding with itself
+				print snake[0]
+				print snake[1:]
+				gameOver()
+				start_mode = True
+				for i, value in enumerate(pixels[1087:1142:1]):
+					pixels[i] = (255,255,255)
+				pixels = black[:]
+				client.put_pixels(pixels)
+				# client.put_pixels(pixels)
+				continue
+				# start_mode = True
+				# curses.endwin()
+				# quit()
+
+			new_head = [snake[0][0], snake[0][1], (255,255,255)]
+
+			if key == curses.KEY_DOWN:
+				new_head[1] -= 1
+			if key == curses.KEY_UP:
+				new_head[1] += 1
+			if key == curses.KEY_LEFT:
+				new_head[0] -= 1
+			if key == curses.KEY_RIGHT:
+				new_head[0] += 1
+
+			snake.insert(0, new_head)
+
+			if (snake[0][0] == food[0][0]) and (snake[0][1] == food [0][1]):
+				food = generateFoodPos()
+			else:
+				tail = snake.pop()
+				pixelMatrix[tail[0]][tail[1]] = (0,0,0)
+
+			updatePixelMatrixWithList(snake)
+			updatePixelMatrixWithList(food)
+			matrixToArray(pixelMatrix)
+			client.put_pixels(pixels)
+			time.sleep(1.0/(len(snake)+1))
+	except KeyboardInterrupt:
+		curses.endwin()
+		quit()
+
+
+
+
+
+
+
+if __name__ == '__main__':
+	# Set mode based on command line args
+	# 0 = game mode
+	# 1 = dev mode (don't use joysticks, send data to opengl server)
+	assert (len(sys.argv) == 2), 'Incorrect number of arguments supplied'
+
+	if (sys.argv[1] == "0"):
+		print 'LED game mode'
+		joystick_run()
+	else:
+		print 'Dev mode'
+		develop_run()
