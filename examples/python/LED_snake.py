@@ -3,6 +3,7 @@
 import opc, time
 import random
 import curses
+from curses import KEY_RIGHT, KEY_LEFT, KEY_UP, KEY_DOWN
 
 import threading, time
 import os, struct, array
@@ -546,17 +547,41 @@ def joystick_run():
 		quit()
 
 def develop_run():
+	numLEDs = 1088+55
+	numLEDsPerStrip = 32
+	xLEDs = 34
+	yLEDs = 32
+	client = opc.Client('localhost:7890')
+	evbuf = ""
+
+	black = [ (0,0,0) ] * (numLEDs)
+	white = [ (255,255,255) ] * (numLEDs)
+	red = [ (255,0,0) ] * (numLEDs)
+
+	blackMatrix = [[(0,0,0)] * yLEDs for i in range(xLEDs)]
+	whiteMatrix = [[(255,255,255)] * yLEDs for i in range(xLEDs)]
+	redMatrix = [[(255,0,0)] * yLEDs for i in range(xLEDs)]
+
+	pixels = [ (0,0,0) ] * numLEDs
+	pixelMatrix = [[(0,0,0)] * yLEDs for i in range(xLEDs)]
+
+	start_mode = True
+	food = None
+	snake = []
+
 	# Setup keybord input
 	#TODO: Lookup what this does
 	#curses.initsrc()
 	curses.initscr()
-	win = curses.newwin(20, 60, 0, 0)
+	win = curses.newwin(0, 0, 0, 0)
 	win.keypad(1)
 	curses.noecho()
 	curses.curs_set(0)
 	win.border(0)
 	win.nodelay(1)
 
+	startx = xLEDs/4
+	starty = yLEDs/2
 
 	# We'll store the states here.
 	axis_states = {}
@@ -568,7 +593,12 @@ def develop_run():
 	client.put_pixels(pixels)
 
 	try:
-		while True:
+		key = KEY_RIGHT
+
+		#***********ESC KEY TO EXIT
+		#TODO: change this
+		while key != 27:
+			win.border(0)
 			brightness = 0
 			shift = 1
 			while (start_mode):
@@ -583,63 +613,66 @@ def develop_run():
 				gameStartPixels(brightness)
 				matrixToArray(pixelMatrix)
 				client.put_pixels(pixels)
-				if evbuf:
-					time2, value, type, number = struct.unpack('IhBB', evbuf)
-					if type & 0x01:
-						button = button_map[number]
-						if button:
-							button_states[button] = value
-							if value:
 
-								# *********************** START GAME
+				#TODO: change this
+				#KEY PRESSED STUFF
 
-								# if start button pressed
-								if (button == "base4"):
-									snake = [
-										[startx, 	starty, (255,255,255)],
-										[startx-1, 	starty, (255,255,255)],
-										[startx-2, 	starty, (255,255,255)]
-									]
-									start_mode = False
-									food = generateFoodPos()
-									key = curses.KEY_RIGHT
-									prev_key = curses.KEY_RIGHT
-									pixels = black[:]
-									resetPixelMatrix()
-									client.put_pixels(pixels)
-									time.sleep(2)
+				prevKey = key # Previous key pressed
+				event = win.getch()
+				key = key if event == -1 else event
+
+				# *********************** START GAME
+				if key == ord(' '):
+					# if start button pressed (SPACE BAR)
+					snake = [
+						[startx, 	starty, (255,255,255)],
+						[startx-1, 	starty, (255,255,255)],
+						[startx-2, 	starty, (255,255,255)]
+					]
+					start_mode = False
+					food = generateFoodPos()
+					key = curses.KEY_RIGHT
+					prev_key = curses.KEY_RIGHT
+					pixels = black[:]
+					resetPixelMatrix()
+					client.put_pixels(pixels)
+					print('starting...')
+					time.sleep(2)
+
 
 			# *************************
 			# If button pressed in game
 
 			#next_key = w.getch()
 			#key = key if next_key == -1 else next_key
-			if evbuf:
-				time2, value, type, number = struct.unpack('IhBB', evbuf)
-				if type & 0x01:
-					button = button_map[number]
-					if button:
-						button_states[button] = value
-						if value:
-							# print "%s pressed" % (button)
-							if (button == "thumb2"): #UP
-								if (prev_key != curses.KEY_DOWN):
-									key = curses.KEY_UP
-									prev_key = key
-							if (button == "thumb"): #DOWN
-								if (prev_key != curses.KEY_UP):
-									key = curses.KEY_DOWN
-									prev_key = key
-							if (button == "trigger"): #LEFT
-								if (prev_key != curses.KEY_RIGHT):
-									key = curses.KEY_LEFT
-									prev_key = key
-							if (button == "top"): #RIGHT
-								if (prev_key != curses.KEY_LEFT):
-									key = curses.KEY_RIGHT
-									prev_key = key
-						# else:
-							# print "%s released" % (button)
+
+			#TODO: change this
+			#KEY PRESSED STUFF
+
+			prevKey = key # Previous key pressed
+			event = win.getch()
+			key = key if event == -1 else event
+
+			# If an invalid key is pressed
+			if key not in [KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, 27]:
+				key = prevKey
+
+			#if valid key pressed
+			if key != prevKey:
+				# print "%s pressed" % (button)
+				if (key == KEY_UP): #UP
+					if (prev_key != curses.KEY_DOWN): # check this is a valid move
+						key = curses.KEY_UP
+				if (key == KEY_DOWN): #DOWN
+					if (prev_key != curses.KEY_UP):
+						key = curses.KEY_DOWN
+				if (key == KEY_LEFT): #LEFT
+					if (prev_key != curses.KEY_RIGHT):
+						key = curses.KEY_LEFT
+				if (key == KEY_RIGHT): #RIGHT
+					if (prev_key != curses.KEY_LEFT):
+						key = curses.KEY_RIGHT
+				prev_key = key
 
 			if snake[0][0] in [0, xLEDs-1] or snake[0][1] in [0, yLEDs-1] or snake[0] in snake[1:]: #need to add bit to do with colliding with itself
 				print snake[0]
@@ -658,13 +691,13 @@ def develop_run():
 
 			new_head = [snake[0][0], snake[0][1], (255,255,255)]
 
-			if key == curses.KEY_DOWN:
+			if key == KEY_DOWN:
 				new_head[1] -= 1
-			if key == curses.KEY_UP:
+			if key == KEY_UP:
 				new_head[1] += 1
-			if key == curses.KEY_LEFT:
+			if key == KEY_LEFT:
 				new_head[0] -= 1
-			if key == curses.KEY_RIGHT:
+			if key == KEY_RIGHT:
 				new_head[0] += 1
 
 			snake.insert(0, new_head)
@@ -680,15 +713,10 @@ def develop_run():
 			matrixToArray(pixelMatrix)
 			client.put_pixels(pixels)
 			time.sleep(1.0/(len(snake)+1))
+
 	except KeyboardInterrupt:
 		curses.endwin()
 		quit()
-
-
-
-
-
-
 
 if __name__ == '__main__':
 	# Set mode based on command line args
