@@ -352,6 +352,16 @@ def dancematThread():
 			# 	]
 			# }
 
+def dev_display_pixels(window, pixels):
+	for x in range(0, 34):
+		for y in range(0, 32):
+			window.addch(x, y, '#')
+
+def get_char(pixel):
+	if pixel == (0, 0, 0):
+		return ' '
+	return '#'
+
 def joystick_run():
 	# Iterate over the joystick devices.
 	print('Available devices:')
@@ -569,11 +579,11 @@ def develop_run():
 	food = None
 	snake = []
 
-	# Setup keybord input
-	#TODO: Lookup what this does
-	#curses.initsrc()
+	# Setup keybord input and console display
 	curses.initscr()
-	win = curses.newwin(0, 0, 0, 0)
+			#xLEDs = 34
+			#yLEDs = 32
+	win = curses.newwin(32, 34, 0, 0)
 	win.keypad(1)
 	curses.noecho()
 	curses.curs_set(0)
@@ -590,7 +600,7 @@ def develop_run():
 	axis_map = []
 	button_map = []
 
-	client.put_pixels(pixels)
+	#client.put_pixels(pixels)
 
 	try:
 		key = KEY_RIGHT
@@ -612,7 +622,12 @@ def develop_run():
 					shift = 1
 				gameStartPixels(brightness)
 				matrixToArray(pixelMatrix)
-				client.put_pixels(pixels)
+
+
+				#client.put_pixels(pixels)
+				#win.addch()
+				dev_display_pixels(win, pixels)
+
 
 				#TODO: change this
 				#KEY PRESSED STUFF
@@ -635,7 +650,15 @@ def develop_run():
 					prev_key = curses.KEY_RIGHT
 					pixels = black[:]
 					resetPixelMatrix()
-					client.put_pixels(pixels)
+
+
+
+					#client.put_pixels(pixels)
+					dev_display_pixels(win, pixels)
+					#win.addch(5, 5, '#')
+
+
+
 					print('starting...')
 					time.sleep(2)
 
@@ -682,8 +705,14 @@ def develop_run():
 				for i, value in enumerate(pixels[1087:1142:1]):
 					pixels[i] = (255,255,255)
 				pixels = black[:]
-				client.put_pixels(pixels)
-				# client.put_pixels(pixels)
+
+
+				#client.put_pixels(pixels)
+				#win.addch()
+				dev_display_pixels(win, pixels)
+
+
+
 				continue
 				# start_mode = True
 				# curses.endwin()
@@ -711,7 +740,13 @@ def develop_run():
 			updatePixelMatrixWithList(snake)
 			updatePixelMatrixWithList(food)
 			matrixToArray(pixelMatrix)
-			client.put_pixels(pixels)
+
+
+			#client.put_pixels(pixels)
+			#win.addch()
+			dev_display_pixels(win, pixels)
+
+
 			time.sleep(1.0/(len(snake)+1))
 
 	except KeyboardInterrupt:
