@@ -1,2 +1,2 @@
 rm -f snake_error.log
-python /Users/Matt/Projects/icah_fadecandy/examples/python/LED_snake.py 1
+python LED_snake.py 1
