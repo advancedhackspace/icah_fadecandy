@@ -4,6 +4,7 @@ import opc, time
 import random
 import curses
 from curses import KEY_RIGHT, KEY_LEFT, KEY_UP, KEY_DOWN
+import traceback
 
 import threading, time
 import os, struct, array
@@ -352,10 +353,18 @@ def dancematThread():
 			# 	]
 			# }
 
-def dev_display_pixels(window, pixels):
-	for x in range(0, 34):
-		for y in range(0, 32):
-			window.addch(x, y, '#')
+def log_to_file(err):
+	with open('snake_error.log', 'a') as f:
+		f.write(err)
+		f.close()
+
+def dev_display_pixels(window, pixels, width, height):
+	for x in range(0, width):#33
+		for y in range(0, height):#31
+			window.addch(y, x, get_char(pixels[x + y * height]))
+			#window.refresh()
+			log_to_file(' '.join(('x:', str(x), 'y:', str(y), '\n')))
+			log_to_file(str(get_char(pixels[x + y * height])))
 
 def get_char(pixel):
 	if pixel == (0, 0, 0):
@@ -583,7 +592,7 @@ def develop_run():
 	curses.initscr()
 			#xLEDs = 34
 			#yLEDs = 32
-	win = curses.newwin(32, 34, 0, 0)
+	win = curses.newwin(yLEDs + 1, xLEDs + 1, 0, 0) #height, width, begin_x, begin_y
 	win.keypad(1)
 	curses.noecho()
 	curses.curs_set(0)
@@ -626,7 +635,7 @@ def develop_run():
 
 				#client.put_pixels(pixels)
 				#win.addch()
-				dev_display_pixels(win, pixels)
+				dev_display_pixels(win, pixels, xLEDs, yLEDs)
 
 
 				#TODO: change this
@@ -654,13 +663,13 @@ def develop_run():
 
 
 					#client.put_pixels(pixels)
-					dev_display_pixels(win, pixels)
+					dev_display_pixels(win, pixels, xLEDs, yLEDs)
 					#win.addch(5, 5, '#')
 
 
 
 					print('starting...')
-					time.sleep(2)
+					time.sleep(1)
 
 
 			# *************************
@@ -709,7 +718,7 @@ def develop_run():
 
 				#client.put_pixels(pixels)
 				#win.addch()
-				dev_display_pixels(win, pixels)
+				dev_display_pixels(win, pixels, xLEDs, yLEDs)
 
 
 
@@ -744,7 +753,7 @@ def develop_run():
 
 			#client.put_pixels(pixels)
 			#win.addch()
-			dev_display_pixels(win, pixels)
+			dev_display_pixels(win, pixels, xLEDs, yLEDs)
 
 
 			time.sleep(1.0/(len(snake)+1))
@@ -752,6 +761,10 @@ def develop_run():
 	except KeyboardInterrupt:
 		curses.endwin()
 		quit()
+
+	except:
+		curses.endwin()
+		traceback.print_exc()
 
 if __name__ == '__main__':
 	# Set mode based on command line args
