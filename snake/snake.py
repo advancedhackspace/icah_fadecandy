@@ -1,6 +1,7 @@
 # SNAKES GAME
 # Use ARROW KEYS to play, SPACE BAR for pausing/resuming and Esc Key for exiting
 
+# NOTE: USE PYTHON 3!
 # NOTE: all coordinates are in [y, x] form
 
 import curses
@@ -85,8 +86,8 @@ curses.napms(1000)
 snakeIO = DebugIO()
 
 while alive:
-    win.timeout(150 - (len(snake)/5 + len(snake)/10)%120) #increase speed when longer?
-
+    #win.timeout(150 - (len(snake)/5 + len(snake)/10)%120) #increase speed when longer?
+    win.timeout(150)
 
 
     # Get key
