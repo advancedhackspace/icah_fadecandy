@@ -69,7 +69,43 @@ class DebugIO(SnakeIO):
 
 @SnakeIO.register
 class LEDIO(SnakeIO):
-    pass
+    LEDS_PER_STRIP = 32
+    NUM_LEDS = 1088 + 55
+
+    SNAKE_PIXEL = (255, 255, 255)
+    FOOD_PIXEL = (0, 255, 0)
+    TRAIL_PIXEL = (0, 0, 0)
+
+    def __init__(self):
+        self.client = opc.Client('localhost:7890')
+        self.pixels = pixels = [ (0,0,0) ] * NUM_LEDS
+
+    def get_keypress(self, win):
+        pass
+
+
+    def calcPixelArrayPos(x, y):
+    	return 55 + (x * LEDS_PER_STRIP) + ((x % 2 ) * LEDS_PER_STRIP) + (((x + 1) % 2) * y) + ((x % 2) * -y) + ((x % 2) * -1)
+
+    # Not currently needed as we do not store state of the whole grid
+    #def matrixToArray(matrix):
+    #	for x in range(xLEDs):
+    #		for y in range(yLEDs):
+    #			pixels[calcPixelArrayPos(x,y)] = matrix[x][y]
+
+    # Build a pixel list by:
+    # Writing the head of the snake
+    # Erasing the snake's trail, if there is one
+    # Writing the food
+    # NOTE: x, y coordinates are given as (y, x) so must reverse
+    def output(self, snake, trail, food):
+        self.pixels[calcPixelArrayPos(snake[0][1], snake[0][0])] = SNAKE_PIXEL
+        self.pixels[calcPixelArrayPos(trail[1], trail[0])] = TRAIL_PIXEL
+        self.pixels[calcPixelArrayPos(food[1], food[0])] = FOOD_PIXEL
+        self.client.put_pixels(self.pixels)
+
+    def cleanup(self):
+        pass
 
 if __name__ == '__main__':
-    print ('Instance:', isinstance(DebugIO(), SnakeIO))
+    print ('Instance:', isinstance(LEDIO(), SnakeIO))

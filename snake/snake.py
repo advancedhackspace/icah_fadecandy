@@ -86,3 +86,9 @@ while alive:
 
 snakeIO.cleanup()
 print("\nScore - " + str(score))
+
+#if __name__ == '__main__':
+	# Set mode based on command line args
+	# 0 = game mode
+	# 1 = dev mode (don't use joysticks, send data to opengl server)
+	#assert (len(sys.argv) == 2), 'Incorrect number of arguments supplied'
