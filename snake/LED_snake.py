@@ -1,14 +1,17 @@
 #!/usr/bin/env python
 
-# Light each LED in sequence, and repeat.
-
 import opc, time
 import random
 import curses
+from curses import KEY_RIGHT, KEY_LEFT, KEY_UP, KEY_DOWN
+import traceback
 
 import threading, time
 import os, struct, array
 from fcntl import ioctl
+
+import sys
+import LED_snake_joystick as joystick
 
 numLEDs = 1088+55
 numLEDsPerStrip = 32
@@ -33,271 +36,269 @@ food = None
 snake = []
 
 def gameStartPixels(b):
-	pixelMatrix[	0+5		][	0+21	] = (	b	,	b	,	b	)#P
-	pixelMatrix[	0+5		][	1+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	0+5		][	2+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	0+5		][	3+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	0+5		][	4+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	1+5		][	0+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	1+5		][	1+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	1+5		][	2+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	1+5		][	3+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	1+5		][	4+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	2+5		][	0+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	2+5		][	1+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	2+5		][	2+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	2+5		][	3+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	2+5		][	4+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	3+5		][	0+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	3+5		][	1+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	3+5		][	2+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	3+5		][	3+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	3+5		][	4+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	4+5		][	0+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	4+5		][	1+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	4+5		][	2+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	4+5		][	3+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	4+5		][	4+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	5+5		][	0+21	] = (	b	,	b	,	b	)#R
-	pixelMatrix[	5+5		][	1+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	5+5		][	2+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	5+5		][	3+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	5+5		][	4+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	6+5		][	0+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	6+5		][	1+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	6+5		][	2+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	6+5		][	3+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	6+5		][	4+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	7+5		][	0+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	7+5		][	1+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	7+5		][	2+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	7+5		][	3+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	7+5		][	4+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	8+5		][	0+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	8+5		][	1+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	8+5		][	2+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	8+5		][	3+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	8+5		][	4+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	9+5		][	0+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	9+5		][	1+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	9+5		][	2+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	9+5		][	3+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	9+5		][	4+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	10+5	][	0+21	] = (	b	,	b	,	b	)#E
-	pixelMatrix[	10+5	][	1+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	10+5	][	2+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	10+5	][	3+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	10+5	][	4+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	11+5	][	0+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	11+5	][	1+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	11+5	][	2+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	11+5	][	3+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	11+5	][	4+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	12+5	][	0+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	12+5	][	1+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	12+5	][	2+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	12+5	][	3+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	12+5	][	4+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	13+5	][	0+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	13+5	][	1+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	13+5	][	2+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	13+5	][	3+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	13+5	][	4+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	14+5	][	0+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	14+5	][	1+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	14+5	][	2+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	14+5	][	3+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	14+5	][	4+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	15+5	][	0+21	] = (	b	,	b	,	b	)#s
-	pixelMatrix[	15+5	][	1+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	15+5	][	2+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	15+5	][	3+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	15+5	][	4+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	16+5	][	0+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	16+5	][	1+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	16+5	][	2+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	16+5	][	3+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	16+5	][	4+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	17+5	][	0+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	17+5	][	1+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	17+5	][	2+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	17+5	][	3+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	17+5	][	4+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	18+5	][	0+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	18+5	][	1+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	18+5	][	2+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	18+5	][	3+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	18+5	][	4+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	19+5	][	0+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	19+5	][	1+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	19+5	][	2+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	19+5	][	3+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	19+5	][	4+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	20+5	][	0+21	] = (	b	,	b	,	b	) #s
-	pixelMatrix[	20+5	][	1+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	20+5	][	2+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	20+5	][	3+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	20+5	][	4+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	21+5	][	0+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	21+5	][	1+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	21+5	][	2+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	21+5	][	3+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	21+5	][	4+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	22+5	][	0+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	22+5	][	1+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	22+5	][	2+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	22+5	][	3+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	22+5	][	4+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	23+5	][	0+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	23+5	][	1+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	23+5	][	2+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	23+5	][	3+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	23+5	][	4+21	] = (	b	,	b	,	b	)
-	pixelMatrix[	24+5	][	0+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	24+5	][	1+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	24+5	][	2+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	24+5	][	3+21	] = (	0	,	0	,	0	)
-	pixelMatrix[	24+5	][	4+21	] = (	0	,	0	,	0	)
+	pixelMatrix[0+5][0+21] = (b, b, b) #P
+	pixelMatrix[0+5][1+21] = (b, b, b)
+	pixelMatrix[0+5][2+21] = (b, b, b)
+	pixelMatrix[0+5][3+21] = (b, b, b)
+	pixelMatrix[0+5][4+21] = (b, b, b)
+	pixelMatrix[1+5][0+21] = (0, 0, 0)
+	pixelMatrix[1+5][1+21] = (0, 0, 0)
+	pixelMatrix[1+5][2+21] = (b, b, b)
+	pixelMatrix[1+5][3+21] = (0, 0, 0)
+	pixelMatrix[1+5][4+21] = (b, b, b)
+	pixelMatrix[2+5][0+21] = (0, 0, 0)
+	pixelMatrix[2+5][1+21] = (0, 0, 0)
+	pixelMatrix[2+5][2+21] = (b, b, b)
+	pixelMatrix[2+5][3+21] = (0, 0, 0)
+	pixelMatrix[2+5][4+21] = (b, b, b)
+	pixelMatrix[3+5][0+21] = (0, 0, 0)
+	pixelMatrix[3+5][1+21] = (0, 0, 0)
+	pixelMatrix[3+5][2+21] = (0, 0, 0)
+	pixelMatrix[3+5][3+21] = (b, b, b)
+	pixelMatrix[3+5][4+21] = (0, 0, 0)
+	pixelMatrix[4+5][0+21] = (0, 0, 0)
+	pixelMatrix[4+5][1+21] = (0, 0, 0)
+	pixelMatrix[4+5][2+21] = (0, 0, 0)
+	pixelMatrix[4+5][3+21] = (0, 0, 0)
+	pixelMatrix[4+5][4+21] = (0, 0, 0)
+	pixelMatrix[5+5][0+21] = (b, b, b) #R
+	pixelMatrix[5+5][1+21] = (b, b, b)
+	pixelMatrix[5+5][2+21] = (b, b, b)
+	pixelMatrix[5+5][3+21] = (b, b, b)
+	pixelMatrix[5+5][4+21] = (b, b, b)
+	pixelMatrix[6+5][0+21] = (0, 0, 0)
+	pixelMatrix[6+5][1+21] = (0, 0, 0)
+	pixelMatrix[6+5][2+21] = (b, b, b)
+	pixelMatrix[6+5][3+21] = (0, 0, 0)
+	pixelMatrix[6+5][4+21] = (b, b, b)
+	pixelMatrix[7+5][0+21] = (0, 0, 0)
+	pixelMatrix[7+5][1+21] = (b, b, b)
+	pixelMatrix[7+5][2+21] = (b, b, b)
+	pixelMatrix[7+5][3+21] = (0, 0, 0)
+	pixelMatrix[7+5][4+21] = (b, b, b)
+	pixelMatrix[8+5][0+21] = (b, b, b)
+	pixelMatrix[8+5][1+21] = (0, 0, 0)
+	pixelMatrix[8+5][2+21] = (0, 0, 0)
+	pixelMatrix[8+5][3+21] = (b, b, b)
+	pixelMatrix[8+5][4+21] = (0, 0, 0)
+	pixelMatrix[9+5][0+21] = (0, 0, 0)
+	pixelMatrix[9+5][1+21] = (0, 0, 0)
+	pixelMatrix[9+5][2+21] = (0, 0, 0)
+	pixelMatrix[9+5][3+21] = (0, 0, 0)
+	pixelMatrix[9+5][4+21] = (0, 0, 0)
+	pixelMatrix[10+][0+21] = (b, b, b) #E
+	pixelMatrix[10+][1+21] = (b, b, b)
+	pixelMatrix[10+][2+21] = (b, b, b)
+	pixelMatrix[10+][3+21] = (b, b, b)
+	pixelMatrix[10+][4+21] = (b, b, b)
+	pixelMatrix[11+][0+21] = (b, b, b)
+	pixelMatrix[11+][1+21] = (0, 0, 0)
+	pixelMatrix[11+][2+21] = (b, b, b)
+	pixelMatrix[11+][3+21] = (0, 0, 0)
+	pixelMatrix[11+][4+21] = (b, b, b)
+	pixelMatrix[12+][0+21] = (b, b, b)
+	pixelMatrix[12+][1+21] = (0, 0, 0)
+	pixelMatrix[12+][2+21] = (b, b, b)
+	pixelMatrix[12+][3+21] = (0, 0, 0)
+	pixelMatrix[12+][4+21] = (b, b, b)
+	pixelMatrix[13+][0+21] = (b, b, b)
+	pixelMatrix[13+][1+21] = (0, 0, 0)
+	pixelMatrix[13+][2+21] = (0, 0, 0)
+	pixelMatrix[13+][3+21] = (0, 0, 0)
+	pixelMatrix[13+][4+21] = (b, b, b)
+	pixelMatrix[14+][0+21] = (0, 0, 0)
+	pixelMatrix[14+][1+21] = (0, 0, 0)
+	pixelMatrix[14+][2+21] = (0, 0, 0)
+	pixelMatrix[14+][3+21] = (0, 0, 0)
+	pixelMatrix[14+][4+21] = (0, 0, 0)
+	pixelMatrix[15+][0+21] = (b, b, b) #s
+	pixelMatrix[15+][1+21] = (0, 0, 0)
+	pixelMatrix[15+][2+21] = (0, 0, 0)
+	pixelMatrix[15+][3+21] = (b, b, b)
+	pixelMatrix[15+][4+21] = (0, 0, 0)
+	pixelMatrix[16+][0+21] = (b, b, b)
+	pixelMatrix[16+][1+21] = (0, 0, 0)
+	pixelMatrix[16+][2+21] = (b, b, b)
+	pixelMatrix[16+][3+21] = (0, 0, 0)
+	pixelMatrix[16+][4+21] = (b, b, b)
+	pixelMatrix[17+][0+21] = (b, b, b)
+	pixelMatrix[17+][1+21] = (0, 0, 0)
+	pixelMatrix[17+][2+21] = (b, b, b)
+	pixelMatrix[17+][3+21] = (0, 0, 0)
+	pixelMatrix[17+][4+21] = (b, b, b)
+	pixelMatrix[18+][0+21] = (0, 0, 0)
+	pixelMatrix[18+][1+21] = (b, b, b)
+	pixelMatrix[18+][2+21] = (0, 0, 0)
+	pixelMatrix[18+][3+21] = (0, 0, 0)
+	pixelMatrix[18+][4+21] = (b, b, b)
+	pixelMatrix[19+][0+21] = (0, 0, 0)
+	pixelMatrix[19+][1+21] = (0, 0, 0)
+	pixelMatrix[19+][2+21] = (0, 0, 0)
+	pixelMatrix[19+][3+21] = (0, 0, 0)
+	pixelMatrix[19+][4+21] = (0, 0, 0)
+	pixelMatrix[20+][0+21] = (b, b, b) #s
+	pixelMatrix[20+][1+21] = (0, 0, 0)
+	pixelMatrix[20+][2+21] = (0, 0, 0)
+	pixelMatrix[20+][3+21] = (b, b, b)
+	pixelMatrix[20+][4+21] = (0, 0, 0)
+	pixelMatrix[21+][0+21] = (b, b, b)
+	pixelMatrix[21+][1+21] = (0, 0, 0)
+	pixelMatrix[21+][2+21] = (b, b, b)
+	pixelMatrix[21+][3+21] = (0, 0, 0)
+	pixelMatrix[21+][4+21] = (b, b, b)
+	pixelMatrix[22+][0+21] = (b, b, b)
+	pixelMatrix[22+][1+21] = (0, 0, 0)
+	pixelMatrix[22+][2+21] = (b, b, b)
+	pixelMatrix[22+][3+21] = (0, 0, 0)
+	pixelMatrix[22+][4+21] = (b, b, b)
+	pixelMatrix[23+][0+21] = (0, 0, 0)
+	pixelMatrix[23+][1+21] = (b, b, b)
+	pixelMatrix[23+][2+21] = (0, 0, 0)
+	pixelMatrix[23+][3+21] = (0, 0, 0)
+	pixelMatrix[23+][4+21] = (b, b, b)
+	pixelMatrix[24+][0+21] = (0, 0, 0)
+	pixelMatrix[24+][1+21] = (0, 0, 0)
+	pixelMatrix[24+][2+21] = (0, 0, 0)
+	pixelMatrix[24+][3+21] = (0, 0, 0)
+	pixelMatrix[24+][4+21] = (0, 0, 0)
 
 
 	#######################################################################3
 
-	pixelMatrix[	0+5		][	0+13	] = (	b	,	b	,	b	) #S
-	pixelMatrix[	0+5		][	1+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	0+5		][	2+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	0+5		][	3+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	0+5		][	4+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	1+5		][	0+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	1+5		][	1+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	1+5		][	2+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	1+5		][	3+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	1+5		][	4+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	2+5		][	0+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	2+5		][	1+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	2+5		][	2+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	2+5		][	3+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	2+5		][	4+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	3+5		][	0+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	3+5		][	1+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	3+5		][	2+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	3+5		][	3+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	3+5		][	4+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	4+5		][	0+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	4+5		][	1+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	4+5		][	2+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	4+5		][	3+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	4+5		][	4+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	5+5		][	0+13	] = (	0	,	0	,	0	) #T
-	pixelMatrix[	5+5		][	1+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	5+5		][	2+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	5+5		][	3+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	5+5		][	4+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	6+5		][	0+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	6+5		][	1+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	6+5		][	2+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	6+5		][	3+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	6+5		][	4+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	7+5		][	0+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	7+5		][	1+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	7+5		][	2+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	7+5		][	3+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	7+5		][	4+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	8+5		][	0+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	8+5		][	1+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	8+5		][	2+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	8+5		][	3+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	8+5		][	4+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	9+5		][	0+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	9+5		][	1+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	9+5		][	2+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	9+5		][	3+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	9+5		][	4+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	10+5	][	0+13	] = (	b	,	b	,	b	) #A
-	pixelMatrix[	10+5	][	1+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	10+5	][	2+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	10+5	][	3+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	10+5	][	4+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	11+5	][	0+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	11+5	][	1+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	11+5	][	2+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	11+5	][	3+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	11+5	][	4+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	12+5	][	0+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	12+5	][	1+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	12+5	][	2+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	12+5	][	3+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	12+5	][	4+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	13+5	][	0+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	13+5	][	1+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	13+5	][	2+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	13+5	][	3+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	13+5	][	4+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	14+5	][	0+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	14+5	][	1+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	14+5	][	2+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	14+5	][	3+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	14+5	][	4+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	15+5	][	0+13	] = (	b	,	b	,	b	)#R
-	pixelMatrix[	15+5	][	1+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	15+5	][	2+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	15+5	][	3+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	15+5	][	4+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	16+5	][	0+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	16+5	][	1+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	16+5	][	2+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	16+5	][	3+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	16+5	][	4+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	17+5	][	0+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	17+5	][	1+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	17+5	][	2+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	17+5	][	3+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	17+5	][	4+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	18+5	][	0+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	18+5	][	1+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	18+5	][	2+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	18+5	][	3+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	18+5	][	4+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	19+5	][	0+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	19+5	][	1+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	19+5	][	2+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	19+5	][	3+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	19+5	][	4+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	20+5	][	0+13	] = (	0	,	0	,	0	) #T
-	pixelMatrix[	20+5	][	1+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	20+5	][	2+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	20+5	][	3+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	20+5	][	4+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	21+5	][	0+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	21+5	][	1+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	21+5	][	2+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	21+5	][	3+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	21+5	][	4+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	22+5	][	0+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	22+5	][	1+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	22+5	][	2+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	22+5	][	3+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	22+5	][	4+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	23+5	][	0+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	23+5	][	1+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	23+5	][	2+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	23+5	][	3+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	23+5	][	4+13	] = (	b	,	b	,	b	)
-	pixelMatrix[	24+5	][	0+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	24+5	][	1+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	24+5	][	2+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	24+5	][	3+13	] = (	0	,	0	,	0	)
-	pixelMatrix[	24+5	][	4+13	] = (	b	,	b	,	b	)
+	pixelMatrix[0+5][0+13] = (b, b, b) #S
+	pixelMatrix[0+5][1+13] = (0, 0, 0)
+	pixelMatrix[0+5][2+13] = (0, 0, 0)
+	pixelMatrix[0+5][3+13] = (b, b, b)
+	pixelMatrix[0+5][4+13] = (0, 0, 0)
+	pixelMatrix[1+5][0+13] = (b, b, b)
+	pixelMatrix[1+5][1+13] = (0, 0, 0)
+	pixelMatrix[1+5][2+13] = (b, b, b)
+	pixelMatrix[1+5][3+13] = (0, 0, 0)
+	pixelMatrix[1+5][4+13] = (b, b, b)
+	pixelMatrix[2+5][0+13] = (b, b, b)
+	pixelMatrix[2+5][1+13] = (0, 0, 0)
+	pixelMatrix[2+5][2+13] = (b, b, b)
+	pixelMatrix[2+5][3+13] = (0, 0, 0)
+	pixelMatrix[2+5][4+13] = (b, b, b)
+	pixelMatrix[3+5][0+13] = (0, 0, 0)
+	pixelMatrix[3+5][1+13] = (b, b, b)
+	pixelMatrix[3+5][2+13] = (0, 0, 0)
+	pixelMatrix[3+5][3+13] = (0, 0, 0)
+	pixelMatrix[3+5][4+13] = (b, b, b)
+	pixelMatrix[4+5][0+13] = (0, 0, 0)
+	pixelMatrix[4+5][1+13] = (0, 0, 0)
+	pixelMatrix[4+5][2+13] = (0, 0, 0)
+	pixelMatrix[4+5][3+13] = (0, 0, 0)
+	pixelMatrix[4+5][4+13] = (0, 0, 0)
+	pixelMatrix[5+5][0+13] = (0, 0, 0) #T
+	pixelMatrix[5+5][1+13] = (0, 0, 0)
+	pixelMatrix[5+5][2+13] = (0, 0, 0)
+	pixelMatrix[5+5][3+13] = (0, 0, 0)
+	pixelMatrix[5+5][4+13] = (b, b, b)
+	pixelMatrix[6+5][0+13] = (0, 0, 0)
+	pixelMatrix[6+5][1+13] = (0, 0, 0)
+	pixelMatrix[6+5][2+13] = (0, 0, 0)
+	pixelMatrix[6+5][3+13] = (0, 0, 0)
+	pixelMatrix[6+5][4+13] = (b, b, b)
+	pixelMatrix[7+5][0+13] = (b, b, b)
+	pixelMatrix[7+5][1+13] = (b, b, b)
+	pixelMatrix[7+5][2+13] = (b, b, b)
+	pixelMatrix[7+5][3+13] = (b, b, b)
+	pixelMatrix[7+5][4+13] = (b, b, b)
+	pixelMatrix[8+5][0+13] = (0, 0, 0)
+	pixelMatrix[8+5][1+13] = (0, 0, 0)
+	pixelMatrix[8+5][2+13] = (0, 0, 0)
+	pixelMatrix[8+5][3+13] = (0, 0, 0)
+	pixelMatrix[8+5][4+13] = (b, b, b)
+	pixelMatrix[9+5][0+13] = (0, 0, 0)
+	pixelMatrix[9+5][1+13] = (0, 0, 0)
+	pixelMatrix[9+5][2+13] = (0, 0, 0)
+	pixelMatrix[9+5][3+13] = (0, 0, 0)
+	pixelMatrix[9+5][4+13] = (b, b, b)
+	pixelMatrix[10+][0+13] = (b, b, b) #A
+	pixelMatrix[10+][1+13] = (b, b, b)
+	pixelMatrix[10+][2+13] = (b, b, b)
+	pixelMatrix[10+][3+13] = (b, b, b)
+	pixelMatrix[10+][4+13] = (0, 0, 0)
+	pixelMatrix[11+][0+13] = (0, 0, 0)
+	pixelMatrix[11+][1+13] = (0, 0, 0)
+	pixelMatrix[11+][2+13] = (b, b, b)
+	pixelMatrix[11+][3+13] = (0, 0, 0)
+	pixelMatrix[11+][4+13] = (b, b, b)
+	pixelMatrix[12+][0+13] = (0, 0, 0)
+	pixelMatrix[12+][1+13] = (0, 0, 0)
+	pixelMatrix[12+][2+13] = (b, b, b)
+	pixelMatrix[12+][3+13] = (0, 0, 0)
+	pixelMatrix[12+][4+13] = (b, b, b)
+	pixelMatrix[13+][0+13] = (b, b, b)
+	pixelMatrix[13+][1+13] = (b, b, b)
+	pixelMatrix[13+][2+13] = (b, b, b)
+	pixelMatrix[13+][3+13] = (b, b, b)
+	pixelMatrix[13+][4+13] = (0, 0, 0)
+	pixelMatrix[14+][0+13] = (0, 0, 0)
+	pixelMatrix[14+][1+13] = (0, 0, 0)
+	pixelMatrix[14+][2+13] = (0, 0, 0)
+	pixelMatrix[14+][3+13] = (0, 0, 0)
+	pixelMatrix[14+][4+13] = (0, 0, 0)
+	pixelMatrix[15+][0+13] = (b, b, b) #R
+	pixelMatrix[15+][1+13] = (b, b, b)
+	pixelMatrix[15+][2+13] = (b, b, b)
+	pixelMatrix[15+][3+13] = (b, b, b)
+	pixelMatrix[15+][4+13] = (b, b, b)
+	pixelMatrix[16+][0+13] = (0, 0, 0)
+	pixelMatrix[16+][1+13] = (0, 0, 0)
+	pixelMatrix[16+][2+13] = (b, b, b)
+	pixelMatrix[16+][3+13] = (0, 0, 0)
+	pixelMatrix[16+][4+13] = (b, b, b)
+	pixelMatrix[17+][0+13] = (0, 0, 0)
+	pixelMatrix[17+][1+13] = (b, b, b)
+	pixelMatrix[17+][2+13] = (b, b, b)
+	pixelMatrix[17+][3+13] = (0, 0, 0)
+	pixelMatrix[17+][4+13] = (b, b, b)
+	pixelMatrix[18+][0+13] = (b, b, b)
+	pixelMatrix[18+][1+13] = (0, 0, 0)
+	pixelMatrix[18+][2+13] = (0, 0, 0)
+	pixelMatrix[18+][3+13] = (b, b, b)
+	pixelMatrix[18+][4+13] = (0, 0, 0)
+	pixelMatrix[19+][0+13] = (0, 0, 0)
+	pixelMatrix[19+][1+13] = (0, 0, 0)
+	pixelMatrix[19+][2+13] = (0, 0, 0)
+	pixelMatrix[19+][3+13] = (0, 0, 0)
+	pixelMatrix[19+][4+13] = (0, 0, 0)
+	pixelMatrix[20+][0+13] = (0, 0, 0) #T
+	pixelMatrix[20+][1+13] = (0, 0, 0)
+	pixelMatrix[20+][2+13] = (0, 0, 0)
+	pixelMatrix[20+][3+13] = (0, 0, 0)
+	pixelMatrix[20+][4+13] = (b, b, b)
+	pixelMatrix[21+][0+13] = (0, 0, 0)
+	pixelMatrix[21+][1+13] = (0, 0, 0)
+	pixelMatrix[21+][2+13] = (0, 0, 0)
+	pixelMatrix[21+][3+13] = (0, 0, 0)
+	pixelMatrix[21+][4+13] = (b, b, b)
+	pixelMatrix[22+][0+13] = (b, b, b)
+	pixelMatrix[22+][1+13] = (b, b, b)
+	pixelMatrix[22+][2+13] = (b, b, b)
+	pixelMatrix[22+][3+13] = (b, b, b)
+	pixelMatrix[22+][4+13] = (b, b, b)
+	pixelMatrix[23+][0+13] = (0, 0, 0)
+	pixelMatrix[23+][1+13] = (0, 0, 0)
+	pixelMatrix[23+][2+13] = (0, 0, 0)
+	pixelMatrix[23+][3+13] = (0, 0, 0)
+	pixelMatrix[23+][4+13] = (b, b, b)
+	pixelMatrix[24+][0+13] = (0, 0, 0)
+	pixelMatrix[24+][1+13] = (0, 0, 0)
+	pixelMatrix[24+][2+13] = (0, 0, 0)
+	pixelMatrix[24+][3+13] = (0, 0, 0)
+	pixelMatrix[24+][4+13] = (b, b, b)
 
 def calcPixelArrayPos( _x, _y):
 	pos = 55+(_x*numLEDsPerStrip) + ((_x%2)*numLEDsPerStrip) + (((_x+1)%2)*_y) + ((_x%2)*-_y) + ((_x%2)*-1)
 	return pos
 
-
 def matrixToArray(coords):
 	for x in range(34):
 		for y in range(32):
 			pixels[calcPixelArrayPos(x,y)] = coords[x][y]
-
 
 def updatePixelMatrixWithList(s):
 	for i in range(len(s)):
@@ -312,10 +313,10 @@ def generateFoodPos():
 	f=None
 	while f is None:
 		newfood = [[
-				random.randint(1,xLEDs-2),
-				random.randint(1,yLEDs-2),
-				(0,255,0)
-				]]
+		random.randint(1,xLEDs-2),
+		random.randint(1,yLEDs-2),
+		(0,255,0)
+		]]
 		f = newfood if newfood not in snake else None
 		return f
 
@@ -324,36 +325,17 @@ def letterToLED(_letter, _x, _y):
 	letterMatrix = alphabet[_letter]
 
 def gameOver():
-	pixelMatrix = redMatrix
-	matrixToArray(pixelMatrix)
-	pixels = [(255,0,0)] * numLEDs
-	client.put_pixels(pixels)
-	time.sleep(0.1)
-	pixelMatrix = blackMatrix
-	matrixToArray(pixelMatrix)
-	pixels = [(0,0,0)] * numLEDs
-	client.put_pixels(pixels)
-	time.sleep(0.1)
-	pixelMatrix = redMatrix
-	matrixToArray(pixelMatrix)
-	pixels = [(255,0,0)] * numLEDs
-	client.put_pixels(pixels)
-	time.sleep(0.1)
-	pixelMatrix = blackMatrix
-	matrixToArray(pixelMatrix)
-	pixels = [(0,0,0)] * numLEDs
-	client.put_pixels(pixels)
-	time.sleep(0.1)
-	pixelMatrix = redMatrix
-	matrixToArray(pixelMatrix)
-	pixels = [(255,0,0)] * numLEDs
-	client.put_pixels(pixels)
-	time.sleep(0.1)
-	pixelMatrix = blackMatrix
-	matrixToArray(pixelMatrix)
-	pixels = [(0,0,0)] * numLEDs
-	client.put_pixels(pixels)
-	time.sleep(0.1)
+	for i in range(0, 3):
+		pixelMatrix = redMatrix
+		matrixToArray(pixelMatrix)
+		pixels = [(255,0,0)] * numLEDs
+		client.put_pixels(pixels)
+		time.sleep(0.1)
+		pixelMatrix = blackMatrix
+		matrixToArray(pixelMatrix)
+		pixels = [(0,0,0)] * numLEDs
+		client.put_pixels(pixels)
+		time.sleep(0.1)
 
 def dancematThread():
 	global evbuf
@@ -362,100 +344,48 @@ def dancematThread():
 		with lock:
 			evbuf = jsdev.read(8)
 
-# alphabet = {
-# 	"A" : [
-# 		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
-# 		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
-# 		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
-# 		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
+			# alphabet = {
+			# 	"A" : [
+			# 		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
+			# 		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
+			# 		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
+			# 		[(255,255,255), (255,255,255), (255,255,255), (255,255,255)],
+			# 	]
+			# }
 
-# 	]
-# }
+def log_to_file(err):
+	with open('snake_error.log', 'a') as f:
+		f.write(err)
+		f.close()
 
-if __name__ == '__main__':
+def dev_display_pixels(window, pixels, width, height):
+	for x in range(0, width):#33
+		for y in range(0, height):#31
+			window.addch(y, x, get_char(pixels[x + y * height]))
+			#window.refresh()
+			log_to_file(' '.join(('x:', str(x), 'y:', str(y), '\n')))
+			log_to_file(str(get_char(pixels[x + y * height])))
 
+def get_char(pixel):
+	if pixel == (0, 0, 0):
+		return ' '
+	return '#'
+
+def joystick_run():
 	# Iterate over the joystick devices.
 	print('Available devices:')
 
 	for fn in os.listdir('/dev/input'):
-	    if fn.startswith('js'):
-	        print('  /dev/input/%s' % (fn))
+		if fn.startswith('js'):
+			print('  /dev/input/%s' % (fn))
 
 	# We'll store the states here.
 	axis_states = {}
 	button_states = {}
 
-	# These constants were borrowed from linux/input.h
-	axis_names = {
-	    0x00 : 'x',
-	    0x01 : 'y',
-	    0x02 : 'z',
-	    0x03 : 'rx',
-	    0x04 : 'ry',
-	    0x05 : 'rz',
-	    0x06 : 'trottle',
-	    0x07 : 'rudder',
-	    0x08 : 'wheel',
-	    0x09 : 'gas',
-	    0x0a : 'brake',
-	    0x10 : 'hat0x',
-	    0x11 : 'hat0y',
-	    0x12 : 'hat1x',
-	    0x13 : 'hat1y',
-	    0x14 : 'hat2x',
-	    0x15 : 'hat2y',
-	    0x16 : 'hat3x',
-	    0x17 : 'hat3y',
-	    0x18 : 'pressure',
-	    0x19 : 'distance',
-	    0x1a : 'tilt_x',
-	    0x1b : 'tilt_y',
-	    0x1c : 'tool_width',
-	    0x20 : 'volume',
-	    0x28 : 'misc',
-	}
-
-	button_names = {
-	    0x120 : 'trigger',
-	    0x121 : 'thumb',
-	    0x122 : 'thumb2',
-	    0x123 : 'top',
-	    0x124 : 'top2',
-	    0x125 : 'pinkie',
-	    0x126 : 'base',
-	    0x127 : 'base2',
-	    0x128 : 'base3',
-	    0x129 : 'base4',
-	    0x12a : 'base5',
-	    0x12b : 'base6',
-	    0x12f : 'dead',
-	    0x130 : 'a',
-	    0x131 : 'b',
-	    0x132 : 'c',
-	    0x133 : 'x',
-	    0x134 : 'y',
-	    0x135 : 'z',
-	    0x136 : 'tl',
-	    0x137 : 'tr',
-	    0x138 : 'tl2',
-	    0x139 : 'tr2',
-	    0x13a : 'select',
-	    0x13b : 'start',
-	    0x13c : 'mode',
-	    0x13d : 'thumbl',
-	    0x13e : 'thumbr',
-
-	    0x220 : 'dpad_up',
-	    0x221 : 'dpad_down',
-	    0x222 : 'dpad_left',
-	    0x223 : 'dpad_right',
-
-	    # XBox 360 controller uses these codes.
-	    0x2c0 : 'dpad_left',
-	    0x2c1 : 'dpad_right',
-	    0x2c2 : 'dpad_up',
-	    0x2c3 : 'dpad_down',
-	}
+	# Import joystick constants
+	axis_names = joystick.axis_names
+	button_names = joystick.button_names
 
 	axis_map = []
 	button_map = []
@@ -486,18 +416,18 @@ if __name__ == '__main__':
 	ioctl(jsdev, 0x80406a32, buf) # JSIOCGAXMAP
 
 	for axis in buf[:num_axes]:
-	    axis_name = axis_names.get(axis, 'unknown(0x%02x)' % axis)
-	    axis_map.append(axis_name)
-	    axis_states[axis_name] = 0.0
+		axis_name = axis_names.get(axis, 'unknown(0x%02x)' % axis)
+		axis_map.append(axis_name)
+		axis_states[axis_name] = 0.0
 
 	# Get the button map.
 	buf = array.array('H', [0] * 200)
 	ioctl(jsdev, 0x80406a34, buf) # JSIOCGBTNMAP
 
 	for btn in buf[:num_buttons]:
-	    btn_name = button_names.get(btn, 'unknown(0x%03x)' % btn)
-	    button_map.append(btn_name)
-	    button_states[btn_name] = 0
+		btn_name = button_names.get(btn, 'unknown(0x%03x)' % btn)
+		button_map.append(btn_name)
+		button_states[btn_name] = 0
 
 	print '%d axes found: %s' % (num_axes, ', '.join(axis_map))
 	print '%d buttons found: %s' % (num_buttons, ', '.join(button_map))
@@ -516,8 +446,6 @@ if __name__ == '__main__':
 	# 	[startx-1, 	starty, (255,255,255)],
 	# 	[startx-2, 	starty, (255,255,255)]
 	# ]
-
-
 
 	thread = threading.Thread(target = dancematThread)
 	thread.daemon = True
@@ -565,7 +493,6 @@ if __name__ == '__main__':
 									client.put_pixels(pixels)
 									time.sleep(2)
 
-
 			#next_key = w.getch()
 			#key = key if next_key == -1 else next_key
 			if evbuf:
@@ -594,8 +521,6 @@ if __name__ == '__main__':
 									prev_key = key
 						# else:
 							# print "%s released" % (button)
-
-
 
 			if snake[0][0] in [0, xLEDs-1] or snake[0][1] in [0, yLEDs-1] or snake[0] in snake[1:]: #need to add bit to do with colliding with itself
 				print snake[0]
@@ -639,3 +564,217 @@ if __name__ == '__main__':
 	except KeyboardInterrupt:
 		curses.endwin()
 		quit()
+
+def develop_run():
+	numLEDs = 1088+55
+	numLEDsPerStrip = 32
+	xLEDs = 34
+	yLEDs = 32
+	client = opc.Client('localhost:7890')
+	evbuf = ""
+
+	black = [ (0,0,0) ] * (numLEDs)
+	white = [ (255,255,255) ] * (numLEDs)
+	red = [ (255,0,0) ] * (numLEDs)
+
+	blackMatrix = [[(0,0,0)] * yLEDs for i in range(xLEDs)]
+	whiteMatrix = [[(255,255,255)] * yLEDs for i in range(xLEDs)]
+	redMatrix = [[(255,0,0)] * yLEDs for i in range(xLEDs)]
+
+	pixels = [ (0,0,0) ] * numLEDs
+	pixelMatrix = [[(0,0,0)] * yLEDs for i in range(xLEDs)]
+
+	start_mode = True
+	food = None
+	snake = []
+
+	# Setup keybord input and console display
+	curses.initscr()
+			#xLEDs = 34
+			#yLEDs = 32
+	win = curses.newwin(yLEDs + 1, xLEDs + 1, 0, 0) #height, width, begin_x, begin_y
+	win.keypad(1)
+	curses.noecho()
+	curses.curs_set(0)
+	win.border(0)
+	win.nodelay(1)
+
+	startx = xLEDs/4
+	starty = yLEDs/2
+
+	# We'll store the states here.
+	axis_states = {}
+	button_states = {}
+
+	axis_map = []
+	button_map = []
+
+	#client.put_pixels(pixels)
+
+	try:
+		key = KEY_RIGHT
+
+		#***********ESC KEY TO EXIT
+		#TODO: change this
+		while key != 27:
+			win.border(0)
+			brightness = 0
+			shift = 1
+			while (start_mode):
+				# print "in start mode"
+				# pixels = black[:]
+				# client.put_pixels(pixels)
+				brightness = brightness+(5*shift)
+				if (brightness  == 255):
+					shift = -1
+				if (brightness == 100):
+					shift = 1
+				gameStartPixels(brightness)
+				matrixToArray(pixelMatrix)
+
+
+				#client.put_pixels(pixels)
+				#win.addch()
+				dev_display_pixels(win, pixels, xLEDs, yLEDs)
+
+
+				#TODO: change this
+				#KEY PRESSED STUFF
+
+				prevKey = key # Previous key pressed
+				event = win.getch()
+				key = key if event == -1 else event
+
+				# *********************** START GAME
+				if key == ord(' '):
+					# if start button pressed (SPACE BAR)
+					snake = [
+						[startx, 	starty, (255,255,255)],
+						[startx-1, 	starty, (255,255,255)],
+						[startx-2, 	starty, (255,255,255)]
+					]
+					start_mode = False
+					food = generateFoodPos()
+					key = curses.KEY_RIGHT
+					prev_key = curses.KEY_RIGHT
+					pixels = black[:]
+					resetPixelMatrix()
+
+
+
+					#client.put_pixels(pixels)
+					dev_display_pixels(win, pixels, xLEDs, yLEDs)
+					#win.addch(5, 5, '#')
+
+
+
+					print('starting...')
+					time.sleep(1)
+
+
+			# *************************
+			# If button pressed in game
+
+			#next_key = w.getch()
+			#key = key if next_key == -1 else next_key
+
+			#TODO: change this
+			#KEY PRESSED STUFF
+
+			prevKey = key # Previous key pressed
+			event = win.getch()
+			key = key if event == -1 else event
+
+			# If an invalid key is pressed
+			if key not in [KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, 27]:
+				key = prevKey
+
+			#if valid key pressed
+			if key != prevKey:
+				# print "%s pressed" % (button)
+				if (key == KEY_UP): #UP
+					if (prev_key != curses.KEY_DOWN): # check this is a valid move
+						key = curses.KEY_UP
+				if (key == KEY_DOWN): #DOWN
+					if (prev_key != curses.KEY_UP):
+						key = curses.KEY_DOWN
+				if (key == KEY_LEFT): #LEFT
+					if (prev_key != curses.KEY_RIGHT):
+						key = curses.KEY_LEFT
+				if (key == KEY_RIGHT): #RIGHT
+					if (prev_key != curses.KEY_LEFT):
+						key = curses.KEY_RIGHT
+				prev_key = key
+
+			if snake[0][0] in [0, xLEDs-1] or snake[0][1] in [0, yLEDs-1] or snake[0] in snake[1:]: #need to add bit to do with colliding with itself
+				print snake[0]
+				print snake[1:]
+				gameOver()
+				start_mode = True
+				for i, value in enumerate(pixels[1087:1142:1]):
+					pixels[i] = (255,255,255)
+				pixels = black[:]
+
+
+				#client.put_pixels(pixels)
+				#win.addch()
+				dev_display_pixels(win, pixels, xLEDs, yLEDs)
+
+
+
+				continue
+				# start_mode = True
+				# curses.endwin()
+				# quit()
+
+			new_head = [snake[0][0], snake[0][1], (255,255,255)]
+
+			if key == KEY_DOWN:
+				new_head[1] -= 1
+			if key == KEY_UP:
+				new_head[1] += 1
+			if key == KEY_LEFT:
+				new_head[0] -= 1
+			if key == KEY_RIGHT:
+				new_head[0] += 1
+
+			snake.insert(0, new_head)
+
+			if (snake[0][0] == food[0][0]) and (snake[0][1] == food [0][1]):
+				food = generateFoodPos()
+			else:
+				tail = snake.pop()
+				pixelMatrix[tail[0]][tail[1]] = (0,0,0)
+
+			updatePixelMatrixWithList(snake)
+			updatePixelMatrixWithList(food)
+			matrixToArray(pixelMatrix)
+
+
+			#client.put_pixels(pixels)
+			#win.addch()
+			dev_display_pixels(win, pixels, xLEDs, yLEDs)
+
+
+			time.sleep(1.0/(len(snake)+1))
+
+	except KeyboardInterrupt:
+		curses.endwin()
+		quit()
+
+	except:
+		curses.endwin()
+		traceback.print_exc()
+
+if __name__ == '__main__':
+	# Set mode based on command line args
+	# 0 = game mode
+	# 1 = dev mode (don't use joysticks, send data to opengl server)
+	assert (len(sys.argv) == 2), 'Incorrect number of arguments supplied'
+
+	if (sys.argv[1] == "0"):
+		print 'LED game mode'
+		joystick_run()
+	else:
+		print 'Dev mode'
+		develop_run()
