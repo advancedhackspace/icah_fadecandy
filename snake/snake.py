@@ -86,6 +86,7 @@ def run(snakeIO):
     snakeIO.cleanup()
     print("\nScore - " + str(score))
 
+# TODO: add modes 3 and 4
 if __name__ == '__main__':
 	# Set mode based on command line args
 	# 0 = game mode
