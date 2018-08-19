@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 # for DebugIO
 import curses
+import opc
 from curses import KEY_RIGHT, KEY_LEFT, KEY_UP, KEY_DOWN
 
 xLEDs = 34
@@ -36,7 +37,8 @@ class DebugIO(SnakeIO):
 
     def __init__(self):
         curses.initscr()
-        self.win = curses.newwin(yLEDs, xLEDs, 0, 0)
+        # need to include for 1px border on each side
+        self.win = curses.newwin(yLEDs + 2, xLEDs + 2, 0, 0)
         self.win.keypad(1)
         curses.noecho()
         curses.curs_set(0)
@@ -56,13 +58,14 @@ class DebugIO(SnakeIO):
     # Erase the snake's trail, if there is one
     # Write the food
     def output(self, snake, trail, food):
-        self.win.addch(food[0], food[1], self.FOOD_CHAR)
-        self.win.addch(snake[0][0], snake[0][1], self.SNAKE_CHAR)
-        if trail: self.win.addch(trail[0], trail[1], self.TRAIL_CHAR)
+        # need to include for 1px border on each side of sim
+        self.win.addch(food[0] + 1, food[1] + 1, self.FOOD_CHAR)
+        self.win.addch(snake[0][0] + 1, snake[0][1] + 1, self.SNAKE_CHAR)
+        if trail: self.win.addch(trail[0] + 1, trail[1] + 1, self.TRAIL_CHAR)
 
     # TODO make this more general, add more decoration etc
     def debug_score(self, score):
-        self.win.addstr(31, 2, "Score: " + str(score))
+        self.win.addstr(33, 2, "Score: " + str(score))
 
     def cleanup(self):
         curses.endwin()
@@ -78,14 +81,14 @@ class LEDIO(SnakeIO):
 
     def __init__(self):
         self.client = opc.Client('localhost:7890')
-        self.pixels = pixels = [ (0,0,0) ] * NUM_LEDS
+        self.pixels = [(0,0,0)] * self.NUM_LEDS
 
     def get_keypress(self, win):
         pass
 
 
-    def calcPixelArrayPos(x, y):
-    	return 55 + (x * LEDS_PER_STRIP) + ((x % 2 ) * LEDS_PER_STRIP) + (((x + 1) % 2) * y) + ((x % 2) * -y) + ((x % 2) * -1)
+    def calcPixelArrayPos(self, x, y):
+    	return 55 + (x * self.LEDS_PER_STRIP) + ((x % 2 ) * self.LEDS_PER_STRIP) + (((x + 1) % 2) * y) + ((x % 2) * -y) + ((x % 2) * -1)
 
     # Not currently needed as we do not store state of the whole grid
     #def matrixToArray(matrix):
@@ -99,9 +102,9 @@ class LEDIO(SnakeIO):
     # Writing the food
     # NOTE: x, y coordinates are given as (y, x) so must reverse
     def output(self, snake, trail, food):
-        self.pixels[calcPixelArrayPos(snake[0][1], snake[0][0])] = SNAKE_PIXEL
-        self.pixels[calcPixelArrayPos(trail[1], trail[0])] = TRAIL_PIXEL
-        self.pixels[calcPixelArrayPos(food[1], food[0])] = FOOD_PIXEL
+        self.pixels[self.calcPixelArrayPos(snake[0][1], snake[0][0])] = self.SNAKE_PIXEL
+        self.pixels[self.calcPixelArrayPos(trail[1], trail[0])] = self.TRAIL_PIXEL
+        self.pixels[self.calcPixelArrayPos(food[1], food[0])] = self.FOOD_PIXEL
         self.client.put_pixels(self.pixels)
 
     def cleanup(self):

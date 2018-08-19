@@ -1,2 +1,0 @@
-rm -f snake_error.log
-python LED_snake.py 1

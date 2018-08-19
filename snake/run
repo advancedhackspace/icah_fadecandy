@@ -1,0 +1,2 @@
+../openpixelcontrol/bin/gl_server -l layout/snake_grid.json &
+python3 Snake.py
