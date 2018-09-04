@@ -6,11 +6,13 @@
 
 from random import randint
 from operator import add
+
+from SnakeGame import SnakeGame
 from SnakeIO import LEDIO, DebugIO
-import os, sys
 
 xLEDs = 34
 yLEDs = 32
+
 
 def change_dir(curr, new):
     # If given the same direction, or the opposite, don't change direction
@@ -18,40 +20,97 @@ def change_dir(curr, new):
         return curr
     return new
 
-# TODO: bounded mode
+
 # TODO: streamline
 # Return true iff the head of the snake is within bounds (for bounded mode)
 # and does not hit itself
-def legal_move(snake):
-    if snake[0][0] == -1 or snake[0][0] == yLEDs or snake[0][1] == -1 or snake[0][1] == xLEDs:
-        return False
-    if snake[0] in snake[1:]:
+def legal_move(s):
+    if s.get_walls_enabled():
+        if s[0][0] == -1 or s[0][0] == yLEDs or s[0][1] == -1 or s[0][1] == xLEDs:
+            return False
+    if s[0] in s[1:]:
         return False
     return True
 
-def run(simIO, ledIO):
+
+def beast(snake):
+    pass
+
+
+def leaderboard(snake):
+    pass
+
+
+def settings(snake):
+    pass
+
+
+# Entry point
+# Navigate with arrow keys
+# press 'y' to enter menu option
+def menu(snake):
+    while True:
+        menu_option = 1
+        snake.sim_io.display_menu()
+
+        # While enter not pressed
+        while menu_option > 0:
+            # Wait for input
+            key = -1
+            while key < 0:
+                snake.sim_io.wait_for_input(200)
+                key = snake.sim_io.get_keypress()
+
+            # return -1 for select current option, update display inside this
+            menu_option = snake.sim_io.menu_action(menu_option, key)
+
+        snake.sim_io.clear()
+
+        # Play
+        if menu_option == -1:
+            run(snake)
+
+        # Leaderboard
+        elif menu_option == -2:
+            leaderboard(snake)
+
+        # Settings
+        elif menu_option == -3:
+            settings(snake)
+
+        # BEAST MODE (TODO)
+        elif menu_option == -4:
+            # beast(snake)
+            break
+
+
+def run(snake):
     score = 0
-    snake = [[4,10], [4,9], [4,8]]
-    food = [10,20]
+    snake_pixels = [[4, 10], [4, 9], [4, 8]]
+    food = [10, 20]
+    trail = []
 
     KEY_ESC = 27
     key = -1
-    direction = simIO.get_start_dir()
+    direction = snake.sim_io.get_start_dir()
 
     # Display start screen, wait for a keypress
+    snake.sim_io.start_screen_on()
     while key < 0:
-        simIO.wait_for_input(200)
-        key = simIO.get_keypress()
+        snake.sim_io.wait_for_input(200)
+        key = snake.sim_io.get_keypress()
+    snake.sim_io.clear()
 
     while True:
-        # Increase speed when snake is longer?
-        #snakeIO.wait_for_input(150 - (len(snake)/5 + len(snake)/10)%120)
-        simIO.wait_for_input(200)
+        if snake.get_speed_increases():
+            snake.sim_io.wait_for_input(int(200 - (len(snake_pixels) * 3) % 120))
+        else:
+            snake.sim_io.wait_for_input(100)
 
         # Get key
         # get_keypress returns -1 if no key is pressed
         prevKey = key
-        event = simIO.get_keypress()
+        event = snake.sim_io.get_keypress()
         key = key if event == -1 else event
 
         # TODO: change control flow of get key press
@@ -59,47 +118,42 @@ def run(simIO, ledIO):
         if key == KEY_ESC:
             break
         if key != prevKey:
-            if key in simIO.keys_to_dirs: # TODO change to if then get, default one line
-                direction = change_dir(direction, simIO.keys_to_dirs.get(key))
+            if key in snake.sim_io.keys_to_dirs:  # TODO change to if then get, default one line
+                direction = change_dir(direction, snake.sim_io.keys_to_dirs.get(key))
 
         # Add on the new head to the snake, check if legal
-        snake.insert(0, list(map(add, snake[0], direction)))
-        if not legal_move(snake):
+        snake_pixels.insert(0, list(map(add, snake_pixels[0], direction)))
+        if not legal_move(snake_pixels):
             break
 
         # If food is eaten, generate new, otherwise remove tail
-        if snake[0] == food:
+        if snake_pixels[0] == food:
             score += 1
             last = []
-            food = [randint(1, yLEDs-2), randint(1, xLEDs-2)]
-            while food in snake:
-                food = [randint(1, yLEDs-2), randint(1, xLEDs-2)]
+            food = [randint(1, yLEDs - 2), randint(1, xLEDs - 2)]
+            while food in snake_pixels:
+                food = [randint(1, yLEDs - 2), randint(1, xLEDs - 2)]
         else:
-            trail = snake.pop()
+            trail = snake_pixels.pop()
 
         # Output new frame and score, respective IO class will update display as necessary
-        ledIO.output(snake, trail, food)
-        simIO.output(snake, trail, food)
-        simIO.debug_score(score)
+        snake.led_io.output(snake_pixels, trail, food)
+        snake.sim_io.output(snake_pixels, trail, food)
+        snake.sim_io.debug_score(score)
 
-    # Display game over screen
-    simIO.cleanup()
-    print("\nScore - " + str(score))
+    # TODO: Display game over screen
+
+    snake.sim_io.clear()
+
 
 # TODO: add modes 3 and 4
 if __name__ == '__main__':
-	# Set mode based on command line args
-	# 0 = game mode
+    # Set mode based on command line args
+    # 0 = game mode
     # 1 = dev mode - terminal simulation, with output to open_gl also
     # 2 = dev mode - as above but send output to LEDs not open_gl
-    #assert (len(sys.argv) == 2), 'Incorrect number of arguments supplied'
+    # assert (len(sys.argv) == 2), 'Incorrect number of arguments supplied'
 
-    ledIO = LEDIO()
-    simIO = DebugIO()
-    # if sys.args[1] == 0:
-    #     ledIO = LEDIO()
-    # else if sys.args[1] == 1:
-    #     simIO = DebugIO()
-    # else if sys.args[1] == 2:
-    #     simIO = DebugIO()
-    run(simIO, ledIO)
+    snake_game = SnakeGame(DebugIO(), LEDIO(), "hard")
+    menu(snake_game)
+    snake_game.cleanup()

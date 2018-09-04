@@ -8,18 +8,20 @@ from curses import KEY_RIGHT, KEY_LEFT, KEY_UP, KEY_DOWN
 xLEDs = 34
 yLEDs = 32
 
+
 class SnakeIO(ABC):
     @abstractmethod
     def get_keypress(self, win):
-        '''Get a keypress'''
+        """Get a keypress"""
 
     @abstractmethod
     def output(self, win, snake, trail, food):
-        '''Update the display'''
+        """Update the display"""
 
     @abstractmethod
     def cleanup(self):
-        '''Cleanup the input'''
+        """Cleanup the input"""
+
 
 @SnakeIO.register
 class DebugIO(SnakeIO):
@@ -45,6 +47,36 @@ class DebugIO(SnakeIO):
         self.win.border(0)
         self.win.nodelay(1)
 
+    def start_screen_on(self):
+        self.win.addstr(14, 10, "PRESS ENTER")
+        self.win.addstr(15, 11, "TO START")
+
+    def display_menu(self):
+        self.win.addstr(10, 8, '> 1. Play')
+        self.win.addstr(12, 10, '2. Leaderboard')
+        self.win.addstr(14, 10, '3. Settings')
+        self.win.addstr(16, 10, '4. Exit')
+
+    def menu_action(self, menu_pos, key):
+        if key == 121:  # 'y'
+            return -menu_pos
+
+        if key == KEY_UP:
+            if menu_pos == 1:
+                return menu_pos
+            self.win.addstr(10 + 2 * (menu_pos - 1), 8, ' ')
+            self.win.addstr(10 + 2 * (menu_pos - 2), 8, '>')
+            return menu_pos - 1
+
+        elif key == KEY_DOWN:
+            if menu_pos == 4:
+                return menu_pos
+            self.win.addstr(10 + 2 * (menu_pos - 1), 8, ' ')
+            self.win.addstr(10 + 2 * menu_pos, 8, '>')
+            return menu_pos + 1
+
+        return menu_pos
+
     def get_start_dir(self):
         return self.keys_to_dirs.get(KEY_RIGHT)
 
@@ -63,12 +95,20 @@ class DebugIO(SnakeIO):
         self.win.addch(snake[0][0] + 1, snake[0][1] + 1, self.SNAKE_CHAR)
         if trail: self.win.addch(trail[0] + 1, trail[1] + 1, self.TRAIL_CHAR)
 
+    def clear(self):
+        self.win.clear()
+        self.win.border(0)
+
     # TODO make this more general, add more decoration etc
     def debug_score(self, score):
         self.win.addstr(33, 2, "Score: " + str(score))
 
+    def debug(self, string):
+        self.win.addstr(33, 2, string)
+
     def cleanup(self):
         curses.endwin()
+
 
 @SnakeIO.register
 class LEDIO(SnakeIO):
@@ -81,17 +121,17 @@ class LEDIO(SnakeIO):
 
     def __init__(self):
         self.client = opc.Client('localhost:7890')
-        self.pixels = [(0,0,0)] * self.NUM_LEDS
+        self.pixels = [(0, 0, 0)] * self.NUM_LEDS
 
     def get_keypress(self, win):
         pass
 
-
     def calcPixelArrayPos(self, x, y):
-    	return 55 + (x * self.LEDS_PER_STRIP) + ((x % 2 ) * self.LEDS_PER_STRIP) + (((x + 1) % 2) * y) + ((x % 2) * -y) + ((x % 2) * -1)
+        return 55 + (x * self.LEDS_PER_STRIP) + ((x % 2) * self.LEDS_PER_STRIP) + (((x + 1) % 2) * y) + (
+                (x % 2) * -y) + ((x % 2) * -1)
 
     # Not currently needed as we do not store state of the whole grid
-    #def matrixToArray(matrix):
+    # def matrixToArray(matrix):
     #	for x in range(xLEDs):
     #		for y in range(yLEDs):
     #			pixels[calcPixelArrayPos(x,y)] = matrix[x][y]
@@ -110,5 +150,6 @@ class LEDIO(SnakeIO):
     def cleanup(self):
         pass
 
+
 if __name__ == '__main__':
-    print ('Instance:', isinstance(LEDIO(), SnakeIO))
+    print('Instance:', isinstance(LEDIO(), SnakeIO))

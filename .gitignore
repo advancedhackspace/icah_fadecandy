@@ -8,6 +8,9 @@ target/
 .classpath
 .project
 
+# JetBrains folder
+.idea
+
 Thumbs.db
 #Ignore files build by Visual Studio
 *.user
