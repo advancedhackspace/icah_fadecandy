@@ -2,7 +2,9 @@ import csv
 
 
 class SnakeGame:
-    LB_FILE = "leader_board.csv"
+    LB_FILE = "/Users/Matt/Projects/icah_fadecandy/snake/leader_board.csv"
+    MAX_SNAKE_SCORE = 99999
+    LEADER_BOARD_SIZE = 5
 
     def __init__(self, sim_io, led_io, mode):
         self.sim_io = sim_io
@@ -28,10 +30,26 @@ class SnakeGame:
             for entry in self.leader_board:
                 lb.write(entry + ", " + str(self.leader_board[entry]) + "\n")
 
-    # TODO
-    def add_score(self):
-        for entry in self.leader_board:
-            pass
+    def add_score(self, score, name):
+        # If less than max, add
+        evict = False
+        if len(self.leader_board) < self.LEADER_BOARD_SIZE:
+            self.leader_board[name] = score
+        else:
+            for entry in self.leader_board:
+                if score > self.leader_board[entry]:
+                    self.leader_board[name] = score
+                    evict = True
+                    break
+        # If leader board was full and one was added, evict one
+        if evict:
+            low_score = self.MAX_SNAKE_SCORE
+            low_name = ''
+            for entry in self.leader_board:
+                if self.leader_board[entry] < low_score:
+                    low_score = self.leader_board[entry]
+                    low_name = entry
+            self.leader_board.pop(low_name)
 
     def get_walls_enabled(self):
         return self.walls_enabled
