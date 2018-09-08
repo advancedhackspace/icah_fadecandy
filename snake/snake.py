@@ -24,10 +24,24 @@ def change_dir(curr, new):
 # TODO: streamline
 # Return true iff the head of the snake is within bounds (for bounded mode)
 # and does not hit itself
-def legal_move(s):
-    if s.get_walls_enabled():
+def legal_move(snake, s):
+    if snake.get_walls_enabled():
         if s[0][0] == -1 or s[0][0] == yLEDs or s[0][1] == -1 or s[0][1] == xLEDs:
             return False
+    # Teleport
+    else:
+        # y
+        if s[0][0] == -1:
+            s[0][0] = yLEDs - 1
+        elif s[0][0] == yLEDs:
+            s[0][0] = 0
+
+        # x
+        if s[0][1] == -1:
+            s[0][1] = xLEDs - 1
+        elif s[0][1] == xLEDs:
+            s[0][1] = 0
+
     if s[0] in s[1:]:
         return False
     return True
@@ -37,8 +51,13 @@ def beast(snake):
     pass
 
 
-def leaderboard(snake):
-    pass
+def leader_board(snake):
+    snake.display_leader_board()
+    key = -1
+    while key < 0:
+        snake.sim_io.wait_for_input(200)
+        key = snake.sim_io.get_keypress()
+    snake.sim_io.clear()
 
 
 def settings(snake):
@@ -72,7 +91,7 @@ def menu(snake):
 
         # Leaderboard
         elif menu_option == -2:
-            leaderboard(snake)
+            leader_board(snake)
 
         # Settings
         elif menu_option == -3:
@@ -103,9 +122,9 @@ def run(snake):
 
     while True:
         if snake.get_speed_increases():
-            snake.sim_io.wait_for_input(int(200 - (len(snake_pixels) * 3) % 120))
+            snake.sim_io.wait_for_input(int(200 - (len(snake_pixels) * 4) % 140))
         else:
-            snake.sim_io.wait_for_input(100)
+            snake.sim_io.wait_for_input(160)
 
         # Get key
         # get_keypress returns -1 if no key is pressed
@@ -123,7 +142,7 @@ def run(snake):
 
         # Add on the new head to the snake, check if legal
         snake_pixels.insert(0, list(map(add, snake_pixels[0], direction)))
-        if not legal_move(snake_pixels):
+        if not legal_move(snake, snake_pixels):
             break
 
         # If food is eaten, generate new, otherwise remove tail
@@ -140,6 +159,9 @@ def run(snake):
         snake.led_io.output(snake_pixels, trail, food)
         snake.sim_io.output(snake_pixels, trail, food)
         snake.sim_io.debug_score(score)
+
+    # Add to high scores if in competition mode - set name first
+    # snake.add_score(score, name)
 
     # TODO: Display game over screen
 

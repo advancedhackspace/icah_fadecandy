@@ -11,11 +11,15 @@ yLEDs = 32
 
 class SnakeIO(ABC):
     @abstractmethod
-    def get_keypress(self, win):
+    def get_keypress(self):
         """Get a keypress"""
 
     @abstractmethod
-    def output(self, win, snake, trail, food):
+    def display_leader_board(self, leaders):
+        """Display the leader board from a dictionary passed in (5 entries only)"""
+
+    @abstractmethod
+    def output(self, snake, trail, food):
         """Update the display"""
 
     @abstractmethod
@@ -86,6 +90,17 @@ class DebugIO(SnakeIO):
     def get_keypress(self):
         return self.win.getch()
 
+    # TODO: protect from names/scores that are too long
+    def display_leader_board(self, leaders):
+        self.clear()
+        self.win.addstr(2, 12, "Leaderboard")
+        rank = 1
+        for leader in sorted(leaders.items(), key=lambda kv: kv[1], reverse=True):
+            self.win.addstr(2 + rank * 2, 4, str(rank))
+            self.win.addstr(2 + rank * 2, 5, ". ")
+            self.win.addstr(2 + rank * 2, 7, leader[0])
+            self.win.addstr(2 + rank * 2, 30, str(leader[1]))
+
     # Write the head of the snake
     # Erase the snake's trail, if there is one
     # Write the food
@@ -123,18 +138,21 @@ class LEDIO(SnakeIO):
         self.client = opc.Client('localhost:7890')
         self.pixels = [(0, 0, 0)] * self.NUM_LEDS
 
-    def get_keypress(self, win):
+    def get_keypress(self):
         pass
 
-    def calcPixelArrayPos(self, x, y):
+    def calc_pixel_array_pos(self, x, y):
         return 55 + (x * self.LEDS_PER_STRIP) + ((x % 2) * self.LEDS_PER_STRIP) + (((x + 1) % 2) * y) + (
                 (x % 2) * -y) + ((x % 2) * -1)
+
+    def display_leader_board(self, leaders):
+        pass
 
     # Not currently needed as we do not store state of the whole grid
     # def matrixToArray(matrix):
     #	for x in range(xLEDs):
     #		for y in range(yLEDs):
-    #			pixels[calcPixelArrayPos(x,y)] = matrix[x][y]
+    #			pixels[calc_pixel_array_pos(x,y)] = matrix[x][y]
 
     # Build a pixel list by:
     # Writing the head of the snake
@@ -142,9 +160,9 @@ class LEDIO(SnakeIO):
     # Writing the food
     # NOTE: x, y coordinates are given as (y, x) so must reverse
     def output(self, snake, trail, food):
-        self.pixels[self.calcPixelArrayPos(snake[0][1], snake[0][0])] = self.SNAKE_PIXEL
-        self.pixels[self.calcPixelArrayPos(trail[1], trail[0])] = self.TRAIL_PIXEL
-        self.pixels[self.calcPixelArrayPos(food[1], food[0])] = self.FOOD_PIXEL
+        self.pixels[self.calc_pixel_array_pos(snake[0][1], snake[0][0])] = self.SNAKE_PIXEL
+        self.pixels[self.calc_pixel_array_pos(trail[1], trail[0])] = self.TRAIL_PIXEL
+        self.pixels[self.calc_pixel_array_pos(food[1], food[0])] = self.FOOD_PIXEL
         self.client.put_pixels(self.pixels)
 
     def cleanup(self):

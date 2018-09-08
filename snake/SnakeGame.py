@@ -10,7 +10,6 @@ class SnakeGame:
         self.sim_io = sim_io
         self.led_io = led_io
 
-        # TODO: define different modes later
         if mode == 'easy':
             self.walls_enabled = False
             self.speed_increases = False
@@ -50,6 +49,9 @@ class SnakeGame:
                     low_score = self.leader_board[entry]
                     low_name = entry
             self.leader_board.pop(low_name)
+
+    def display_leader_board(self):
+        self.sim_io.display_leader_board(self.leader_board)
 
     def get_walls_enabled(self):
         return self.walls_enabled
